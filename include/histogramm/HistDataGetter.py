@@ -3,7 +3,7 @@ import os
 import numpy as np
 import pandas as pd
 
-from include.Hist_collection import Hist
+from .Hist import Hist
 
 
 def array(*args, **kwargs):
