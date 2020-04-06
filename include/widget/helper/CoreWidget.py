@@ -1,3 +1,4 @@
+import sys
 import numpy as np
 from PyQt5 import QtWidgets, QtCore
 from PyQt5.QtWidgets import QFileDialog
@@ -25,34 +26,66 @@ class CoreWidget(QMainWindow):
         self.menu_file = BCH.setting.menu_bullet(instance_=self,
                                                  name_="&File",
                                                  menu_bar_=self.menubar)
-        self.menu_file_save, self.menu_file_saveas = BCH.setting.submenu_bullet(
+        self.menu_file_save_pic, self.menu_file_saveas_pic = BCH.setting.submenu_bullet(
             instance_=self,
-            name_=["&Save", "&Save As"],
+            name_=["Bild speichern", "Bild speichern als"],
             menu_bullet_=self.menu_file,
             menu_bar_=self.menubar)
         
-        BCH.connect.submenu_and_function(instance_=self, object_=self.menu_file_save,
-                                         func_=self.ActionSaveFile,
-                                         shortcut_="Ctrl+S")
-        BCH.connect.submenu_and_function(instance_=self, object_=self.menu_file_saveas,
-                                         func_=self.ActionSaveFileAs,
-                                         shortcut_="Ctrl+S")
+        self.menu_file_open_meas, self.menu_file_save_meas, self.menu_file_saveas_meas = BCH.setting.submenu_bullet(
+            instance_=self, menu_bullet_=self.menu_file, menu_bar_=self.menubar,
+            name_=["Messung laden", "Messung speichern", "Messung speichern als"])
+        
+        BCH.connect.submenu_and_function(instance_=self, object_=self.menu_file_save_pic, func_=self.ActionSaveFile_pic)
+        BCH.connect.submenu_and_function(instance_=self, object_=self.menu_file_saveas_pic, func_=self.ActionSaveFileAs_pic)
+        
+        BCH.connect.submenu_and_function(instance_=self, object_=self.menu_file_save_meas, func_=self.ActionSaveFile_meas)
+        BCH.connect.submenu_and_function(instance_=self, object_=self.menu_file_saveas_meas, func_=self.ActionSaveFileAs_meas)
+        BCH.connect.submenu_and_function(instance_=self, object_=self.menu_file_open_meas, func_=self.ActionOpenFile_meas)
     
-    def ActionSaveFileAs(self):
+    def ActionSaveFileAs_pic(self):
         opt = QFileDialog.Options()
         opt |= QFileDialog.DontUseNativeDialog
         file_name, _ = QFileDialog.getSaveFileName(self, "QFileDialog.getSaveFileName()", "*.png",
                                                    "All Files (*);;*.png;;*.jpg;;*.pdf)", options=opt)
         if file_name:
             print(file_name)
-            self.file_name = file_name
-            self.save_operation()
+            self.file_name_pic = file_name
+            self.save_operation_pic()
     
-    def ActionSaveFile(self):
-        self.ActionSaveFileAs() if self.file_name is None else self.save_operation()
+    def ActionSaveFile_pic(self):
+        self.ActionSaveFileAs_pic() if self.file_name is None else self.save_operation_pic()
     
-    def save_operation(self):
-        print("nothing special happened here!")
+    def ActionSaveFileAs_meas(self):
+        opt = QFileDialog.Options()
+        opt |= QFileDialog.DontUseNativeDialog
+        file_name, _ = QFileDialog.getSaveFileName(self, "QFileDialog.getSaveFileName()", "*.csv",
+                                                   "All Files (*);;*.csv)", options=opt)
+        if file_name:
+            print(file_name)
+            self.file_name_meas = file_name
+            self.save_operation_meas()
+    
+    def ActionSaveFile_meas(self):
+        self.ActionSaveFileAs_meas() if self.file_name is None else self.save_operation_meas()
+    
+    def ActionOpenFile_meas(self):
+        options = QFileDialog.Options()
+        options |= QFileDialog.DontUseNativeDialog
+        file_name, _ = QFileDialog.getOpenFileName(self, "QFileDialog.getOpenFileName()", "", "All Files (*);;CSV Files (*.csv)",
+                                                   options=options)
+        if file_name:
+            self.file_name_meas = file_name
+            self.open_operation_meas()
+            del self.file_name_meas
+    
+    def save_operation_meas(self):
+        pass
+    
+    def open_operation_meas(self):
+        pass
+    
+    def save_operation_pic(self):
         pass
     
     def set_b_coord(self, item=None):
