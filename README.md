@@ -16,7 +16,7 @@ Python (>3.6.8) packages required for the process (can be installed via ``pip in
  - [NumPy](https://numpy.org/)
  - [Pandas](https://pandas.pydata.org/)
  - [matplotlib](https://matplotlib.org/)
- - [kafe2*](https://github.com/dsavoiu/kafe2)
+ - [kafe2](https://github.com/dsavoiu/kafe2) (current master)
  - [iminuit](https://iminuit.readthedocs.io/en/latest/)
  - [PyQt5](https://www.riverbankcomputing.com/software/pyqt/intro)
  - [Jupyter](https://jupyter.org/)
@@ -24,8 +24,6 @@ Python (>3.6.8) packages required for the process (can be installed via ``pip in
  - [jupyter contrib nbextensions](https://github.com/ipython-contrib/jupyter_contrib_nbextensions) (optional)
  - [swifter](https://github.com/jmcarpenter2/swifter) (optional)
  
- 
- *Currently a merge between the master and hist brance is needed.
  
  ## Datasets
   - <ins>Masterclass</ins>  
