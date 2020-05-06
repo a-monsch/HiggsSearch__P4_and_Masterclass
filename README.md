@@ -1,8 +1,5 @@
 # HiggsSearch__P4_and_Masterclass
 
-## Current status
-Creation and preparation phase
-
 ## Brief overview
 Collection of materials that can be used as templates for tasks and exercises and can be applied in university physics lab course or in carefully factorized parts as part of a masterclass. Topics to be covered are: Motivation for the Higgs discovery of 2012 using data from the CMS detector (http://opendata.cern.ch/record/5500) using Python, basic data analysis and statistical basics.
 
