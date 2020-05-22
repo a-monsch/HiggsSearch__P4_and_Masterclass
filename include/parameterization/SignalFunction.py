@@ -32,8 +32,7 @@ class SignalFunction(object):
     
     def __init__(self, x_mean=0.0):
         self._x_mean = x_mean
-        self._x_mean_latex = self._x_mean_latex if x_mean != 0.0 else ""
-        SignalFunction.set_global_x_mean(self._x_mean, self._x_latex, self._x_mean_latex)
+        self._x_mean_latex =  SignalFunction._x_mean_latex if x_mean != 0.0 else ""
     
     def _get_param_names(self, name, with_x=False):
         """
@@ -76,8 +75,6 @@ class SignalFunction(object):
         self._x_latex = "m_{{4\\ell}}" if x_latex is None else x_latex
         self._x_mean_latex = " - \\bar{{m}}_{{4\\ell}}" if x_mean_latex is None else x_mean_latex
         
-        SignalFunction.set_global_x_mean(self._x_mean, self._x_latex, self._x_mean_latex)
-    
     @staticmethod
     def set_global_x_mean(value=None, x_latex=None, x_mean_latex=None):
         """

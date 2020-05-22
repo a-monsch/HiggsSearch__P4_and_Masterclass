@@ -12,8 +12,7 @@ class LegendreLinearCombination(object):
     
     def __init__(self, x_mean=0.0):
         self._x_mean = x_mean
-        self._x_mean_latex = self._x_mean_latex if x_mean != 0.0 else ""
-        LegendreLinearCombination.set_global_x_mean(self._x_mean, self._x_latex, self._x_mean_latex)
+        self._x_mean_latex = LegendreLinearCombination._x_mean_latex if x_mean != 0.0 else ""
     
     def _get_param_names(self, name, with_x=False):
         """
@@ -54,8 +53,6 @@ class LegendreLinearCombination(object):
         self._x_mean = value if value is not None else self._x_mean
         self._x_latex = "m_{{4\\ell}}" if x_latex is None else x_latex
         self._x_mean_latex = " - \\bar{{m}}_{{4\\ell}}" if x_mean_latex is None else x_mean_latex
-        
-        LegendreLinearCombination.set_global_x_mean(self._x_mean, self._x_latex, self._x_mean_latex)
     
     @staticmethod
     def set_global_x_mean(value=None, x_latex=None, x_mean_latex=None):
@@ -93,12 +90,12 @@ class LegendreLinearCombination(object):
             return np.polynomial.legendre.legval(x, np.array(list(kwargs.values())))
     
     @staticmethod
-    def grade_0(x, a):
+    def grade_0(x, a=0.02143):
         x = x - LegendreLinearCombination._x_mean
         return np.polynomial.legendre.legval(x, [a])
     
     @staticmethod
-    def grade_1(x, a, b):
+    def grade_1(x, a=0.02189, b=0.00022):
         x = x - LegendreLinearCombination._x_mean
         return np.polynomial.legendre.legval(x, [a, b])
     
@@ -108,21 +105,21 @@ class LegendreLinearCombination(object):
         return np.polynomial.legendre.legval(x, [a, b, c])
     
     @staticmethod
-    def grade_3(x, a, b, c, d):
+    def grade_3(x, a=0.0243, b=0.000218, c=-8.7e-6, d=-2.2e-8):
         x = x - LegendreLinearCombination._x_mean
         return np.polynomial.legendre.legval(x, [a, b, c, d])
     
     @staticmethod
-    def grade_4(x, a, b, c, d, e):
+    def grade_4(x, a=0.02461, b=0.000212, c=-1.26e-5, d=-1.5e-8, e=3.0e-9):
         x = x - LegendreLinearCombination._x_mean
         return np.polynomial.legendre.legval(x, [a, b, c, d, e])
     
     @staticmethod
-    def grade_5(x, a, b, c, d, e, f):
+    def grade_5(x, a=0.02458, b=0.000148, c=-1.22e-5, d=2.1e-7, e=2.7e-9, f=-1.3e-10):
         x = x - LegendreLinearCombination._x_mean
         return np.polynomial.legendre.legval(x, [a, b, c, d, e, f])
     
     @staticmethod
-    def grade_6(x, a, b, c, d, e, f, g):
+    def grade_6(x, a=0.24, b=0.00016, c=1.9e-6, d=1.6e-7, e=-2.6e-8, f=-1.0e-10, g=1.23e-11):
         x = x - LegendreLinearCombination._x_mean
         return np.polynomial.legendre.legval(x, [a, b, c, d, e, f, g])

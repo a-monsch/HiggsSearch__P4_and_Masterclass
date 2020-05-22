@@ -1,9 +1,9 @@
-import ast
 import math
 import sys
 from copy import deepcopy
 from functools import partial
 
+import mplcursors
 import numpy as np
 from PyQt5 import QtWidgets, QtCore
 from PyQt5.QtWidgets import QDialog, QLineEdit
@@ -168,51 +168,8 @@ class PlotHiggs(PlotInitWidget):
             spinbox.setVisible(self._visible_mu)
             spinbox.valueChanged.connect(self.plot)
     
-    def save_operation_meas(self):
-        
-        np.savetxt(self.file_name_meas, self.list_num,
-                   header=f"histogram;{self.b_num};{self.hist_range}".replace(" ", ""))
-    
-    def open_operation_meas(self):
-        data_ = np.loadtxt(self.file_name_meas)
-        with open(self.file_name_meas, "r") as f:
-            header_ = f.readline()
-        
-        def _setting_data(create_hist=False):
-            self.list_num = list(data_)
-            if create_hist:
-                h_ = Hist(bins=self.b_num, hist_range=self.hist_range)
-                h_.fill_hist("data", data_)
-                self.list_num = h_.data["data"]
-            BCH.setting.text(self.n_text, [f"{int(item)}" for item in self.list_num])
-            self.plot()
-        
-        if "#" in header_ and "histogram" in header_:
-            header_ = header_.replace("#", "").replace("\n", "").replace(" ", "").split(";")[1:]
-            try:
-                bins_, hist_range_ = ast.literal_eval(header_[0]), ast.literal_eval(header_[1])
-                if bins_ == self.b_num and hist_range_ == self.hist_range:
-                    _setting_data()
-                elif bins_ != self.b_num or hist_range_ != self.hist_range:
-                    raise TypeError("loaded bins != actual bins; loaded histogram range != actual histogram range")
-            
-            except IndexError:
-                if len(data_) == len(self.list_num):
-                    print("Bins and/or hist range not specified")
-                    _setting_data()
-                elif len(data_) != len(self.list_num):
-                    raise TypeError("loaded bins != actual bins")
-        
-        elif "#" in header_ and "raw" in header_:
-            _setting_data(create_hist=True)
-        
-        else:
-            raise TypeError("Specify if data is a histogram or raw data with a header: "
-                            "# histogram;<bins>;(<lower hist range>, <upper hist range>) "
-                            "# raw")
-    
-    def save_operation_pic(self):
-        self.figure.savefig(self.file_name_pic)
+    def save_operation(self):
+        self.figure.savefig(self.file_name)
         self.canvas.draw()
     
     def load_hists(self):
@@ -312,10 +269,8 @@ class PlotHiggs(PlotInitWidget):
         
         TSH.legend_without_duplicate_labels(ax)
         
-        _d, _u = self.hist_range
-        ax.set_xticks([_d + (_u - _d) / self.num_buttons * i for i in range(self.num_buttons + 1)])
+        ax.set_xticks([70 + (181 - 70) / self.num_buttons * i for i in range(self.num_buttons + 1)])
         ax.set_yticks([0 + 2 * i for i in range(self.y_plot_limits[1])])
-        
         ax.set_xlim(*self.hist_range)
         ax.set_ylim(*self.y_plot_limits)
         ax.set_xlabel(r"$m_{4\ell}$ in GeV")
@@ -331,6 +286,8 @@ class PlotHiggs(PlotInitWidget):
             self.canvas.draw()
         
         self.figure.canvas.mpl_connect('button_press_event', onclick)
+        
+        mplcursors.cursor()
         
         self.canvas.draw()
 

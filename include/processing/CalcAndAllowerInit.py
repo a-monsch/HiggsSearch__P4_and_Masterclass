@@ -21,6 +21,14 @@ class AllowedInit(object):
     Class that introduces certain cuts and thus restricts the leptons in the events.
     """
     
+    a_calc_instance = None
+    a_allowed_instance = None
+    
+    def __init__(self, *, calc_obj=None, allowed_obj=None):
+        AllowedInit.a_allowed_instance = AllowedInit if allowed_obj is None else allowed_obj
+        AllowedInit.a_calc_instance = CalcInit if calc_obj is None else calc_obj
+        
+    
     # Used allowed parameter in class
     va = {'rel_pf_iso': 0.35, 'misshit': 1.0,
           'pt_1': 20.0, 'pt_2': 10.0, 'pt_min_mu': 5.0, 'pt_min_el': 7.0,
@@ -105,7 +113,7 @@ class AllowedInit(object):
         """
     
     @staticmethod
-    def type(typ, look_for):
+    def lepton_type(typ, look_for):
         """
         Checks for the permitted classification of leptons.
 
@@ -158,10 +166,10 @@ class AllowedInit(object):
         :return: bool
         """
         if number_of_leptons == 4:
-            accept_array = (mass_list > AllowedInit.va["min_4l_m"]) & (mass_list < AllowedInit.va["max_4l_m"])
+            accept_array = (mass_list > AllowedInit.a_allowed_instance.va["min_4l_m"]) & (mass_list < AllowedInit.a_allowed_instance.va["max_4l_m"])
             return True if np.sum(accept_array) >= 1 else False
         if number_of_leptons == 2:
-            accept_array = (mass_list > AllowedInit.va["min_2l_m"])
+            accept_array = (mass_list > AllowedInit.a_allowed_instance.va["min_2l_m"])
             if look_for != "both":
                 return True if np.sum(accept_array) >= 2 else False
             if look_for == "both":
@@ -173,6 +181,13 @@ class CalcInit(object):
     Class for the calculation of certain sizes that are used for
     the cuts or are essential for the reconstruction.
     """
+    
+    c_calc_instance = None
+    c_allowed_instance = None
+    
+    def __init__(self, *, calc_obj=None, allowed_obj=None):
+        CalcInit.c_allowed_instance = AllowedInit if allowed_obj is None else allowed_obj
+        CalcInit.c_calc_instance = CalcInit if calc_obj is None else calc_obj
     
     @staticmethod
     def combined_charge(charge, combine_num):
@@ -306,9 +321,9 @@ class CalcInit(object):
             tot_idx = np.concatenate([index[0], index[1]])
             
             if energy is None:
-                return np.sqrt(CalcInit.invariant_mass_square(px[tot_idx], py[tot_idx], pz[tot_idx]))
+                return np.sqrt(CalcInit.c_calc_instance.invariant_mass_square(px[tot_idx], py[tot_idx], pz[tot_idx]))
             if energy is not None:
-                return np.sqrt(CalcInit.invariant_mass_square(px[tot_idx], py[tot_idx], pz[tot_idx], energy[tot_idx]))
+                return np.sqrt(CalcInit.c_calc_instance.invariant_mass_square(px[tot_idx], py[tot_idx], pz[tot_idx], energy[tot_idx]))
         
         if look_for == "both":
             
@@ -319,15 +334,15 @@ class CalcInit(object):
             if tag[0] == tag[1]: raise ValueError("z1_tag == z2_tag in 2mu2e channel!")
             
             if energy is None:
-                return np.sqrt(CalcInit.invariant_mass_square(np.concatenate([px_mu[idx_mu], px_el[idx_el]]),
-                                                              np.concatenate([py_mu[idx_mu], py_el[idx_el]]),
-                                                              np.concatenate([pz_mu[idx_mu], pz_el[idx_el]])))
+                return np.sqrt(CalcInit.c_calc_instance.invariant_mass_square(np.concatenate([px_mu[idx_mu], px_el[idx_el]]),
+                                                                                     np.concatenate([py_mu[idx_mu], py_el[idx_el]]),
+                                                                                     np.concatenate([pz_mu[idx_mu], pz_el[idx_el]])))
             if energy is not None:
                 energy_mu, energy_el = energy[0], energy[1]
-                return np.sqrt(CalcInit.invariant_mass_square(np.concatenate((px_mu[idx_mu], px_el[idx_el])),
-                                                              np.concatenate((py_mu[idx_mu], py_el[idx_el])),
-                                                              np.concatenate((pz_mu[idx_mu], pz_el[idx_el])),
-                                                              np.concatenate((energy_mu[idx_mu], energy_el[idx_el]))))
+                return np.sqrt(CalcInit.c_calc_instance.invariant_mass_square(np.concatenate((px_mu[idx_mu], px_el[idx_el])),
+                                                                                     np.concatenate((py_mu[idx_mu], py_el[idx_el])),
+                                                                                     np.concatenate((pz_mu[idx_mu], pz_el[idx_el])),
+                                                                                     np.concatenate((energy_mu[idx_mu], energy_el[idx_el]))))
     
     @staticmethod
     def zz_and_index(eta, phi, pt, px, py, pz, charge, energy=None, look_for="muon"):
@@ -395,11 +410,11 @@ class CalcInit(object):
             for i, j in combinations(idx_, 2):
                 i, j = int(i), int(j)
                 if (q_[i] + q_[j]) == 0:
-                    if AllowedInit.delta_r(CalcInit.delta_r(eta_[[i, j]], phi_[[i, j]])):
+                    if CalcInit.c_allowed_instance.delta_r(CalcInit.c_calc_instance.delta_r(eta_[[i, j]], phi_[[i, j]])):
                         try:
-                            inv_z_m = CalcInit.invariant_mass_square(px_[[i, j]], py_[[i, j]], pz_[[i, j]], e_[[i, j]])
+                            inv_z_m = CalcInit.c_calc_instance.invariant_mass_square(px_[[i, j]], py_[[i, j]], pz_[[i, j]], e_[[i, j]])
                         except TypeError:
-                            inv_z_m = CalcInit.invariant_mass_square(px_[[i, j]], py_[[i, j]], pz_[[i, j]])
+                            inv_z_m = CalcInit.c_calc_instance.invariant_mass_square(px_[[i, j]], py_[[i, j]], pz_[[i, j]])
                         
                         if inv_z_m > 4.0:
                             if z_ == "z1":
@@ -422,8 +437,8 @@ class CalcInit(object):
                 
                 if inv_z2[0] > inv_z1[0]: inv_z1, inv_z2 = inv_z2, inv_z1
                 
-                valid_pt = AllowedInit.pt(pt[np.concatenate([inv_z1[1], inv_z2[1]])], look_for=look_for)
-                valid_zz = AllowedInit.zz(inv_z1[0], inv_z2[0])
+                valid_pt = CalcInit.c_allowed_instance.pt(pt[np.concatenate([inv_z1[1], inv_z2[1]])], look_for=look_for)
+                valid_zz = CalcInit.c_allowed_instance.zz(inv_z1[0], inv_z2[0])
                 
                 if valid_pt and valid_zz:
                     return [inv_z1[0]], [inv_z2[0]], inv_z1[1], inv_z2[1]
@@ -474,7 +489,7 @@ class CalcInit(object):
                 
                 used_pt = np.concatenate([pt[mu_idx][inv_z1[1]], pt[el_idx][inv_z2[1]]])
                 valid_pt = (np.sum(used_pt > 20) >= 1) and (np.sum(used_pt > 10) >= 2)
-                valid_zz = AllowedInit.zz(inv_z1[0], inv_z2[0])
+                valid_zz = CalcInit.c_allowed_instance.zz(inv_z1[0], inv_z2[0])
                 
                 if valid_pt and valid_zz:
                     return inv_z1[0], inv_z2[0], inv_z1[1], inv_z2[1], inv_z1[2], inv_z2[2]
@@ -513,9 +528,9 @@ class CalcInit(object):
                 inv_square_mass = 0
                 if (charge[p[0]] + charge[p[1]]) == 0:
                     if energy is None:
-                        inv_square_mass = CalcInit.invariant_mass_square(px[p], py[p], pz[p])
+                        inv_square_mass = CalcInit.c_calc_instance.invariant_mass_square(px[p], py[p], pz[p])
                     if energy is not None:
-                        inv_square_mass = CalcInit.invariant_mass_square(px[p], py[p], pz[p], energy[p])
+                        inv_square_mass = CalcInit.c_calc_instance.invariant_mass_square(px[p], py[p], pz[p], energy[p])
                     if inv_square_mass >= 0:
                         combined_mass.append(np.sqrt(inv_square_mass))
                     else:
@@ -533,10 +548,10 @@ class CalcInit(object):
                     inv_square_mass = 0
                     if (charge[p[0]] + charge[p[1]] + charge[p[2]] + charge[p[3]]) == 0:
                         if energy is not None:
-                            inv_square_mass = CalcInit.invariant_mass_square(np.array(px)[p], np.array(py)[p],
+                            inv_square_mass = CalcInit.c_calc_instance.invariant_mass_square(np.array(px)[p], np.array(py)[p],
                                                                              np.array(pz)[p], np.array(energy)[p])
                         if energy is None:
-                            inv_square_mass = CalcInit.invariant_mass_square(np.array(px)[p], np.array(py)[p],
+                            inv_square_mass = CalcInit.c_calc_instance.invariant_mass_square(np.array(px)[p], np.array(py)[p],
                                                                              np.array(pz)[p])
                         if inv_square_mass >= 0:
                             combined_mass.append(np.sqrt(inv_square_mass))
@@ -570,15 +585,14 @@ class CalcInit(object):
                         inv_square_mass = 0
                         if energy is not None:
                             energy_mu, energy_el = energy[0], energy[1]
-                            inv_square_mass = CalcInit.invariant_mass_square(np.concatenate((px_mu[tc[0]], px_el[tc[1]])),
-                                                                             np.concatenate((py_mu[tc[0]], py_el[tc[1]])),
-                                                                             np.concatenate((pz_mu[tc[0]], pz_el[tc[1]])),
-                                                                             energy=np.concatenate(
-                                                                                 (energy_mu[tc[0]], energy_el[tc[1]])))
+                            inv_square_mass = CalcInit.c_calc_instance.invariant_mass_square(np.concatenate((px_mu[tc[0]], px_el[tc[1]])),
+                                                                                    np.concatenate((py_mu[tc[0]], py_el[tc[1]])),
+                                                                                    np.concatenate((pz_mu[tc[0]], pz_el[tc[1]])),
+                                                                                    energy=np.concatenate((energy_mu[tc[0]], energy_el[tc[1]])))
                         if energy is None:
-                            inv_square_mass = CalcInit.invariant_mass_square(np.concatenate((px_mu[tc[0]], px_el[tc[1]])),
-                                                                             np.concatenate((py_mu[tc[0]], py_el[tc[1]])),
-                                                                             np.concatenate((pz_mu[tc[0]], pz_el[tc[1]])))
+                            inv_square_mass = CalcInit.c_calc_instance.invariant_mass_square(np.concatenate((px_mu[tc[0]], px_el[tc[1]])),
+                                                                                    np.concatenate((py_mu[tc[0]], py_el[tc[1]])),
+                                                                                    np.concatenate((pz_mu[tc[0]], pz_el[tc[1]])))
                         
                         if inv_square_mass >= 0:
                             combined_mass.append(np.sqrt(inv_square_mass))

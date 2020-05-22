@@ -1,4 +1,3 @@
-import ast
 import sys
 from functools import partial
 
@@ -25,7 +24,7 @@ class Wuerfel(PlotInitWidget):
         self.additional_buttons()
         self.HistUiCall()
         
-        BCH.setting.text(self.N_text, "N simuliert")
+        BCH.setting.text(self.N_text, "N sim.")
         BCH.setting.text_alignment(self.N_text, "left")
         BCH.setting.geometry(self.N_text, x_=self.N_text.x() - int(self.b_space * 3.25),
                              y_=self.N_text.y(), w_=self.N_text.width(), h_=self.N_text.height())
@@ -53,43 +52,9 @@ class Wuerfel(PlotInitWidget):
         BCH.connect.submenu_and_function(object_=self.m_stat_calc, func_=self._get_statistical_calculation)
         self._visible_stat_calc = False
     
-    def save_operation_pic(self):
-        self.figure.savefig(self.file_name_pic)
+    def save_operation(self):
+        self.figure.savefig(self.file_name)
         self.canvas.draw()
-    
-    def save_operation_meas(self):
-        np.savetxt(self.file_name_meas, self.measurement_array,
-                   header=f"histogram;{self.b_num}".replace(" ", ""))
-    
-    def open_operation_meas(self):
-        data_ = np.loadtxt(self.file_name_meas)
-        with open(self.file_name_meas, "r") as f:
-            header_ = f.readline()
-        
-        if "#" in header_ and "histogram" in header_:
-            header_ = header_.replace("#", "").replace("\n", "").replace(" ", "").split(";")[1:]
-            try:
-                bins_ = ast.literal_eval(header_[0])
-                if bins_ == self.b_num:
-                    self.measurement_array = data_
-                    BCH.setting.text(self._measurement_n_text_table_right_, [f"{int(item)}" for item in data_])
-                    self.plot()
-                else:
-                    raise TypeError("loaded bins != actual bins")
-            except IndexError:
-                if len(data_) == len(self.measurement_array):
-                    print("Bins and/or hist range not specified")
-                    self.measurement_array = data_
-                    BCH.setting.text(self._measurement_n_text_table_right_, [f"{int(item)}" for item in data_])
-                    self.plot()
-                elif len(data_) != len(self.list_num):
-                    raise TypeError("loaded bins != actual bins")
-                    
-        if "#" in header_ and "raw" in header_:
-            for item in data_:
-                self.add_oc1r(measurment=True, fix_value=int(item))
-            BCH.setting.text(self._measurement_n_text_table_right_, [f"{int(item)}" for item in self.measurement_array])
-            self.plot()
     
     def additional_buttons(self):
         
@@ -232,13 +197,13 @@ class Wuerfel(PlotInitWidget):
         BCH.setting.text(self.m_norm, "Simulation Normierung ein" if not self._draw_normed else "Simulation Normierung aus")
         self.plot()
     
-    def add_oc1r(self, measurment=False, fix_value=None):
+    def add_oc1r(self, measurment=False):
         if not measurment:
             rand_ = self.CalcCls.own_pdf_simulation_one()
             self.n_text[rand_ - 1].setText(str(int(self.n_text[rand_ - 1].toPlainText()) + 1))
             self.list_num[rand_ - 1] += 1
         if measurment:
-            rand_ = self.CalcCls.own_pdf_measurement_one() if fix_value is None else fix_value
+            rand_ = self.CalcCls.own_pdf_measurement_one()
             self.measurement_array[rand_ - 1] += 1
     
     def add_ocnr(self, num=100):
@@ -345,7 +310,3 @@ def WidgetWuerfel(*args, **kwargs):
     window.setWindowFlags(window.windowFlags() & ~QtCore.Qt.WindowMaximizeButtonHint)
     window.show()
     app.exec_()
-
-
-if __name__ == "__main__":
-    WidgetWuerfel()

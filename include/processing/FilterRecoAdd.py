@@ -54,7 +54,7 @@ class FilterStr(ProcessingRow):
                                           type_variables=[str])  # [look_for + "_type"], type_variables=[str])
             type_array = found_array[0]
             
-            accept_array = FilterStr.allowed_instance.type(type_array, look_for)
+            accept_array = FilterStr.allowed_instance.lepton_type(type_array, look_for)
             
             self.eval_and_reduce(to_accept_list=[accept_array])
             return self.row
@@ -63,8 +63,8 @@ class FilterStr(ProcessingRow):
             found_array = self.search_for(search_variables=["muon_type", "electron_type"], type_variables=[str, str])
             type_mu, type_el = found_array[0], found_array[1]
             
-            accept_array_mu = FilterStr.allowed_instance.type(type_mu, "muon")
-            accept_array_el = FilterStr.allowed_instance.type(type_el, "electron")
+            accept_array_mu = FilterStr.allowed_instance.lepton_type(type_mu, "muon")
+            accept_array_el = FilterStr.allowed_instance.lepton_type(type_el, "electron")
             
             self.eval_and_reduce(to_accept_list=[accept_array_mu, accept_array_el])
             return self.row

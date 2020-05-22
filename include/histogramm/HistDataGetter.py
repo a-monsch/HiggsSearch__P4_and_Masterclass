@@ -66,7 +66,6 @@ class HistDataGetter(object):
         hist.set_empty_bin(["data", "mc_bac", "mc_sig"])
         
         hist.fill_hist_from_dir(col_="mass_4l", dir_=self.mc_dir, info=self.info)
-        hist.fill_hist_from_dir(col_="mass_4l", dir_=self.ru_dir, info=self.info)
         return hist
     
     def get_data_raw(self, column_name="mass_4l"):

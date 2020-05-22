@@ -91,26 +91,12 @@ class McFitInit(object):
 
         :param used_func: function
         """
+        """
+        Function to create a kafe2 fit object
         
+        :param used_func: function
+        """
         # may be implemented by students
-    
-    def save_report_to_yaml(self):
-        """
-        Saves all fit results of all fits in the cache.
-
-        TODO: Insert function that only certain objects should be saved.
-        """
-        for fn in self.drfd.keys():
-            tn = "fit_results.yml"
-            if not self.to_chi2_one: tn = f"fit__{self.tag}__year_{self.info[0][0]}__func_{fn}__not_scaled.yml"
-            if self.to_chi2_one:
-                ichi2 = str(round(self.drfd[fn]["initial_chi2_ndf"], 5)).replace(".", "-")
-                sf = str(round(self.drfd[fn]["scale_factor"], 9)).replace(".", "-")
-                tn1 = f"fit__{self.tag}__year_{self.info[0][0]}__func_{fn}"
-                tn2 = f"__errmodel_{self.error_type_model}__initchi2ndf_{ichi2}__scalef_{sf}.yml"
-                tn = tn1 + tn2
-            
-            self.drfd[fn]["fit"].to_file(os.path.join(self.save_dir, tn), calculate_asymmetric_errors=True)
     
     def plot_fit(self, used_func):
         """
