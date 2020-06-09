@@ -12,8 +12,13 @@ from include.widget.helper.CorePlot import PlotInitWidget
 
 class Wuerfel(PlotInitWidget):
     
-    def __init__(self, *args, b_num=6, calc_class=None, **kwargs):
-        super(Wuerfel, self).__init__(b_num=b_num, *args, **kwargs)
+    def __init__(self, *args, b_num=6, calc_class=None,
+                 f_width=700, f_height=700, f_bottom=0.09, f_left=0.09, g_width=900, language="EN",
+                 **kwargs):
+        
+        super(Wuerfel, self).__init__(*args, b_num=b_num, language=language,
+                                      g_width=g_width, f_height=f_height, f_bottom=f_bottom,
+                                      f_left=f_left, f_width=f_width, **kwargs)
         
         self.CalcCls = _FallBack(self) if calc_class is None else calc_class
         
@@ -34,9 +39,12 @@ class Wuerfel(PlotInitWidget):
         BCH.setting.submenu_bullet = partial(BCH.setting.submenu_bullet, instance_=self, menu_bar_=self.menubar)
         BCH.connect.submenu_and_function = partial(BCH.connect.submenu_and_function, instance_=self)
         
-        self.menu_zusatz = BCH.setting.menu_bullet(name_="Zusatz")
+        self.menu_zusatz = BCH.setting.menu_bullet(name_=self.td["addition"][self.la])
         self.m_simulation, self.m_norm, self.m_measurement, self.m_stat_calc = BCH.setting.submenu_bullet(
-            name_=["Simulation ein", "Simulation Normierung ein", "Messung ein", "Statistische Bewertung ein"],
+            name_=[f"{self.td['simulation'][self.la]} {self.td['on'][self.la]}",
+                   f"{self.td['simulation normalization'][self.la]} {self.td['on'][self.la]}",
+                   f"{self.td['measurement'][self.la]} {self.td['on'][self.la]}",
+                   f"{self.td['statistical evaluation'][self.la]} {self.td['on'][self.la]}"],
             menu_bullet_=self.menu_zusatz)
         
         BCH.connect.submenu_and_function(object_=self.m_simulation, func_=self._get_simulation_button)
@@ -63,27 +71,29 @@ class Wuerfel(PlotInitWidget):
         BCH.setting.button = partial(BCH.setting.button, x_=x_off, w_=180, h_=self.b_height)
         
         self.fill_simulation_one = QtWidgets.QPushButton(self)
-        BCH.setting.button(self.fill_simulation_one, text_="simuliere 1", y_=y_off + 90, func_=[self.add_oc1r, self.plot])
+        BCH.setting.button(self.fill_simulation_one, text_=f"{self.td['simulate'][self.la]} 1", y_=y_off + 90, func_=[self.add_oc1r, self.plot])
         
         self.fill_simulation_n = QtWidgets.QPushButton(self)
-        BCH.setting.button(self.fill_simulation_n, text_="simuliere 100", y_=y_off + 90 + self.b_height + self.b_space,
+        BCH.setting.button(self.fill_simulation_n, text_=f"{self.td['simulate'][self.la]} 100", y_=y_off + 90 + self.b_height + self.b_space,
                            func_=[partial(self.add_ocnr, 100), self.plot])
         
         self.check_simulation_mean = QtWidgets.QCheckBox(self)
         self.check_simulation_sigma_all = QtWidgets.QCheckBox(self)
         self.check_simulation_sigma_individual = QtWidgets.QCheckBox(self)
         
-        BCH.setting.button(self.check_simulation_mean, text_="Mittelwert",
+        BCH.setting.button(self.check_simulation_mean, text_=f"{self.td['mean'][self.la]}",
                            y_=y_off + 90 + 2 * self.b_height + 2 * self.b_space, func_=self.plot)
         
-        BCH.setting.button(self.check_simulation_sigma_all, text_="Standardabweichung (alle)",
+        BCH.setting.button(self.check_simulation_sigma_all, text_=f"{self.td['standard deviation'][self.la]} ({self.td['all'][self.la]})",
                            y_=y_off + 90 + 3 * self.b_height + 2 * self.b_space, func_=self.plot)
         
-        BCH.setting.button(self.check_simulation_sigma_individual, text_="Standardabweichung (einzeln)",
+        BCH.setting.button(self.check_simulation_sigma_individual,
+                           text_=f"{self.td['standard deviation'][self.la]} ({self.td['individual'][self.la]})",
                            y_=y_off + 90 + 4 * self.b_height + 2 * self.b_space, func_=self.plot)
         
         self.get_measurment = QtWidgets.QPushButton(self)
-        BCH.setting.button(self.get_measurment, text_="Messe: 10 mal", y_=y_off + 90 + 5 * self.b_height + 2 * self.b_space,
+        BCH.setting.button(self.get_measurment, text_=f"{self.td['measure'][self.la]}: 10 {self.td['times'][self.la]}",
+                           y_=y_off + 90 + 5 * self.b_height + 2 * self.b_space,
                            func_=[partial(self._get_measurment_data, num=10), self.plot,
                                   partial(self._get_measurment_table, init_call=False)])
         
@@ -112,17 +122,19 @@ class Wuerfel(PlotInitWidget):
         return f"${name_} = $ {value_:.2e}"
     
     def _get_statistical_calculation(self):
+        _seva = f"{self.td['statistical evaluation'][self.la]}"
         self._visible_stat_calc = not self._visible_stat_calc
         self._stat_text.setVisible(self._visible_stat_calc)
         BCH.setting.text(self.m_stat_calc,
-                         "Statistische Bewertung ein" if not self._visible_stat_calc else "Statistische Bewertung aus")
+                         f"{_seva} {self.td['on'][self.la]}" if not self._visible_stat_calc else f"{_seva} {self.td['off'][self.la]}")
     
     def _get_measurment_button(self):
-        
+        _meas = f"{self.td['measurement'][self.la]}"
         self._visible_measurement = not self._visible_measurement
         
         self.get_measurment.setVisible(self._visible_measurement)
-        BCH.setting.text(self.m_simulation, "Messung ein" if not self._visible_simulation else "Messung aus")
+        BCH.setting.text(self.m_simulation,
+                         f"{_meas} {self.td['on'][self.la]}" if not self._visible_simulation else f"{_meas} {self.td['off'][self.la]}")
         
         for (table_left, table_right) in zip(self._measurement_info_text_table_left_, self._measurement_n_text_table_right_):
             table_left.setVisible(self._visible_measurement)
@@ -148,7 +160,7 @@ class Wuerfel(PlotInitWidget):
             self._measurement_n_text_table_right_ = [QtWidgets.QTextBrowser(self) for _ in range(self.b_num)]
             
             self._measurement_info_text = QtWidgets.QTextBrowser(self)
-            BCH.setting.text(self._measurement_info_text, "Messungszusammenfassung:")
+            BCH.setting.text(self._measurement_info_text, f"{self.td['measurement summary'][self.la]}:")
             BCH.setting.geometry(self._measurement_info_text, x_=x_start,
                                  y_=y_start + (0.125) * int(self.b_height), w_=200)
             BCH.setting.text_style(self._measurement_info_text)
@@ -181,7 +193,7 @@ class Wuerfel(PlotInitWidget):
             self.add_oc1r(measurment=True)
     
     def _get_simulation_button(self):
-        
+        _sim = f"{self.td['simulation'][self.la]}"
         self._visible_simulation = not self._visible_simulation
         
         self.fill_simulation_one.setVisible(self._visible_simulation)
@@ -190,11 +202,13 @@ class Wuerfel(PlotInitWidget):
         self.check_simulation_mean.setVisible(self._visible_simulation)
         self.check_simulation_sigma_individual.setVisible(self._visible_simulation)
         
-        BCH.setting.text(self.m_simulation, "Simulation ein" if not self._visible_simulation else "Simulation aus")
+        BCH.setting.text(self.m_simulation,
+                         f"{_sim} {self.td['on'][self.la]}" if not self._visible_simulation else f"{_sim} {self.td['off'][self.la]}")
     
     def _get_draw_normed(self):
+        _sim_norm = f"{self.td['simulation normalization'][self.la]}"
         self._draw_normed = not self._draw_normed
-        BCH.setting.text(self.m_norm, "Simulation Normierung ein" if not self._draw_normed else "Simulation Normierung aus")
+        BCH.setting.text(self.m_norm, f"{_sim_norm} {self.td['on'][self.la]}" if not self._draw_normed else f"{_sim_norm} {self.td['off'][self.la]}")
         self.plot()
     
     def add_oc1r(self, measurment=False):
@@ -220,7 +234,7 @@ class Wuerfel(PlotInitWidget):
         ax = self.figure.add_subplot(111)
         ax.set_xlim(0.5, 0.5 + self.b_num)
         ax.set_xticks(np.arange(1, self.b_num + 1, 1))
-        ax.set_ylabel("Bineinträge")
+        ax.set_ylabel(self.td["entries"][self.la])
         ax.set_xlabel("n")
         
         self._stat_text.setPixmap(QtGui.QPixmap(BCH.convert.latex_to_qtpixmap(self._get_rendered_stat())))
@@ -232,16 +246,16 @@ class Wuerfel(PlotInitWidget):
             plot_y_array = self.norm_and_rescale_sim(self.list_num)
         
         ax.bar(np.arange(1, self.b_num + 1, 1), plot_y_array,
-               color="royalblue", alpha=0.5, label="Simulation")
+               color="royalblue", alpha=0.5, label=f"{self.td['simulation'][self.la]}")
         
         if self.check_simulation_mean.isChecked():
-            ax.hlines(self.CalcCls.own_mean(plot_y_array), -1, self.b_num + 2, ls="--", label="Mittelwert")
+            ax.hlines(self.CalcCls.own_mean(plot_y_array), -1, self.b_num + 2, ls="--", label=f"{self.td['mean'][self.la]}")
         
         if self.check_simulation_sigma_all.isChecked():
             m_ = self.CalcCls.own_mean(plot_y_array)
             std_ = self.CalcCls.own_std(plot_y_array)
             ax.fill_between([-1, self.b_num + 2], [m_ + std_, m_ + std_], [m_ - std_, m_ - std_],
-                            color="green", alpha=0.25, label="Standardabweichung (alle)")
+                            color="green", alpha=0.25, label=f"{self.td['standard deviation'][self.la]} ({self.td['all'][self.la]})")
         
         if self.check_simulation_sigma_individual.isChecked():
             y_err_ = self.CalcCls.own_individual_std(self.list_num)
@@ -253,12 +267,12 @@ class Wuerfel(PlotInitWidget):
             
             ax.errorbar(np.arange(1, self.b_num + 1, 1), plot_y_array, yerr=y_err_, fmt="bx", marker="",
                         ecolor="royalblue", alpha=1.0, capsize=int((0.125 / 2. * self.f_width) / self.b_num),
-                        label="Standardabweichung (einzeln)")
+                        label=f"{self.td['standard deviation'][self.la]} ({self.td['individual'][self.la]})")
         
         if self._visible_measurement:
             ax.errorbar(np.arange(1, self.b_num + 1, 1), self.measurement_array, xerr=0,
                         yerr=HistHelper.calc_errors_poisson_near_cont(self.measurement_array),
-                        fmt="ko", lw=2, label="Messung")
+                        fmt="ko", lw=2, label=f"{self.td['measurement'][self.la]}")
         
         ax.legend()
         self.canvas.draw()

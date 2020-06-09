@@ -13,10 +13,10 @@ class PlotInitWidget(CoreWidget):
                  f_left=0.04, f_top=0.98, f_bottom=0.17, f_height=350, f_width=1600, f_start_y=30,
                  g_width=1900, g_height=None,
                  canvas_geom=None,
-                 draw_h_line=False,
+                 draw_h_line=False, language="EN",
                  **kwargs):
         
-        super(PlotInitWidget, self).__init__(*args, **kwargs)
+        super(PlotInitWidget, self).__init__(*args, language=language, **kwargs)
         
         self.draw_h_line = draw_h_line
         self.canvas_geom = canvas_geom
