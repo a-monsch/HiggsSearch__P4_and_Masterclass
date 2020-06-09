@@ -5,6 +5,7 @@ Collection of materials that can be used as templates for tasks and exercises an
 
 ## Language used
  - German
+ - English
 
 
 ## Necessary additional software
