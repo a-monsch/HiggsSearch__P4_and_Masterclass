@@ -694,7 +694,6 @@ class Reconstruct(ProcessingRow):
             px_mu, py_mu, pz_mu = found_array[0], found_array[1], found_array[2]
             z1_index, z2_index, z1_tag, z2_tag = found_array[3], found_array[4], found_array[5], found_array[6]
             px_el, py_el, pz_el = found_array[7], found_array[8], found_array[9]
-            
             mass_hi = self.calc_instance.mass_4l_out_zz([px_mu, px_el], [py_mu, py_el], [pz_mu, pz_el],
                                                         [z1_index, z2_index],
                                                         tag=[str(z1_tag[0]), str(z2_tag[0])], look_for=look_for)

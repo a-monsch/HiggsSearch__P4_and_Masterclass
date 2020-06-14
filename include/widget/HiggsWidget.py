@@ -47,7 +47,8 @@ class PlotHiggs(PlotInitWidget):
         
         self.stat_eval_func = _own_stat_eval_func if stat_eval_func is None else stat_eval_func
         
-        self.info = info if info is not None else [["2012"], ["A-D"]]
+        # self.info = info if info is not None else [["2012"], ["A-D"]]
+        self.info = info if info is not None else [["2012"], ["B", "C"]]
         
         self.mc_other_dir = mc_other_dir
         self.mc_dir_ = mc_dir_

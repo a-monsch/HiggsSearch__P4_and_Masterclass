@@ -329,7 +329,7 @@ class CalcInit(object):
             
             px_mu, px_el, py_mu, py_el, pz_mu, pz_el = px[0], px[1], py[0], py[1], pz[0], pz[1]
             
-            idx_mu, idx_el = (index[0], index[1]) if (tag[0] == "e" and tag[1] == "m") else (index[1], index[0])
+            idx_mu, idx_el = (index[1], index[0]) if (tag[0] == "e" and tag[1] == "m") else (index[0], index[1])
             
             if tag[0] == tag[1]: raise ValueError("z1_tag == z2_tag in 2mu2e channel!")
             

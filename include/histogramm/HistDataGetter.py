@@ -28,7 +28,8 @@ class HistDataGetter(object):
         self.ru_dir = ru_dir
         self.mc_dir = mc_dir
         
-        self.info = [["2012"], ["A-D"]] if info is None else info
+        # self.info = [["2012"], ["A-D"]] if info is None else info
+        self.info = [["2012"], ["B", "C"]] if info is None else info
     
     def get_mc_raw(self, column_name="mass_4l", tag="Background".lower()):
         """

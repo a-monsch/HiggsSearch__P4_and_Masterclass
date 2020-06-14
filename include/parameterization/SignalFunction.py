@@ -105,7 +105,7 @@ class SignalFunction(object):
     
     @staticmethod
     @np.vectorize
-    def DSCB(x, sigma=1.0, mu=125.0, alpha_l=0.5, alpha_r=0.5, n_l=1.1, n_r=1.1):
+    def DSCB(x, sigma=1.35, mu=125.0, alpha_l=0.95, alpha_r=1.15, n_l=3.1, n_r=6.4):
         t = (x - mu) / sigma
         lf = ((alpha_l / n_l) * ((n_l / alpha_l) - alpha_l - t)) ** (-n_l)
         rf = ((alpha_r / n_r) * ((n_r / alpha_r) - alpha_r + t)) ** (-n_r)

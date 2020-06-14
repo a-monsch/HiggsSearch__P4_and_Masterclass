@@ -7,9 +7,15 @@ class HistOf(object):
     Class to draw histograms after the completed filter and reconstruction process.
     """
     
-    def __init__(self, mc_dir="./data/mc_aftH", ru_dir="./data/ru_aftH"):
+    _legend_dict = {"background": {"EN": "Background", "DE": "Untergrund"},
+                    "signal": {"EN": "Signal", "DE": "Signal"},
+                    "measurement": {"EN": "Measurement", "DE": "Messung"}}
+    
+    def __init__(self, mc_dir="./data/mc_aftH", ru_dir="./data/ru_aftH", info=None, language="EN"):
         self.ru_dir = ru_dir
         self.mc_dir = mc_dir
+        self.info = info
+        self.lang = language
     
     def variable(self, variable, bins, hist_range, filter_=None, info_=None):
         """
@@ -25,6 +31,8 @@ class HistOf(object):
         :param info_: list
                       optional, see Hist.fill_hist
         """
+        info_ = self.info if info_ is None else info_
+        
         hist = Hist(bins=bins, hist_range=hist_range)
         hist.set_empty_bin(name=["data", "mc_bac", "mc_sig"])
         
@@ -33,6 +41,8 @@ class HistOf(object):
         
         ax = hist.draw(pass_name=["data", "mc_bac", "mc_sig"],
                        alpha=[0.75, 0.75, 0.75], color=["black", "royalblue", "orangered"],
-                       label=["Messung", "Untergrund", "Signal"])
+                       label=[HistOf._legend_dict["measurement"][self.lang], 
+                              HistOf._legend_dict["background"][self.lang],
+                              HistOf._legend_dict["signal"][self.lang]])
         
         return ax

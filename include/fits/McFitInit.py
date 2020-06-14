@@ -32,7 +32,8 @@ class McFitInit(object):
         self.bins = bins
         self.hist_range = hist_range
         self.tag = tag
-        self.info = [["2012"], ["A-D"]] if info is None else info
+        # self.info = [["2012"], ["A-D"]] if info is None else info
+        self.info = [["2012"], ["B", "C"]] if info is None else info
         self.mc_dir = mc_dir
         self.ru_dir = ru_dir
         self.drfd = {}  # DataRawFitDict
