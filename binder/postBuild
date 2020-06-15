@@ -1,0 +1,15 @@
+#!/bin/bash
+
+wget --max-redirect=20 -O for_analysis_download.zip https://www.dropbox.com/sh/3j648sojeimjmfh/AACeBAPUZkvsr0gHXULloRSWa?dl=0
+
+unzip for_analysis_download.zip
+rm for_analysis_download.zip
+
+unzip for_long_analysis.zip
+rm for_long_analysis.zip
+
+unzip for_event_display.zip
+rm for_event_display.zip
+
+unzip for_widgets.zip
+rm for_widgets.zip

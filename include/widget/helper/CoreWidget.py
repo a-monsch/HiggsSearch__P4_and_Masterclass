@@ -24,7 +24,7 @@ class CoreWidget(QMainWindow):
         self.menuBarInitUi()
     
     def load_language_dict(self):
-        with open('./include/widget/lang/gui.yml', 'r') as outfile:
+        with open('../include/widget/lang/gui.yml', 'r') as outfile:
             my_dict = yaml.full_load(outfile)
         return my_dict
     

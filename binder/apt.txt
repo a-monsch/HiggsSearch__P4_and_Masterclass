@@ -1,0 +1,6 @@
+xvfb 
+git 
+libgl1-mesa-glx 
+xorg 
+openbox 
+p7zip-full
