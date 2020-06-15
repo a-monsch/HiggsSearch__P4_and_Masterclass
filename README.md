@@ -86,19 +86,19 @@ For the local version, the data records can either be downloaded
 [here](https://www.dropbox.com/sh/3j648sojeimjmfh/AACeBAPUZkvsr0gHXULloRSWa?dl=0) manually and unpacked (several times) in a folder `data` or be 
 downloaded and unpacked automatically by `sh /binder/postBuild`. 
 Included in the record is:
-- #####for_event_display   
+- #### for_event_display   
    Contains the `.ig` files for different decays that can be loaded in 
    [IspyWebGL](https://ispy-webgl.web.cern.ch/ispy-webgl/) (is called
    in the notebook). With the help of the values taken there and 
    possible combinations of the detailed tables (also in the folder), 
    the invariant mass of individual decay (four lepton decay) events can 
    be calculated.
-- #####for_widgets
+- #### for_widgets
    Contains lists of the Monte Carlo (MC) Simulated four lepton invariant 
    masses of the underground process and Higgs bosons of different masses 
    (signal process). Is used to display the underlying ground and 
    individual signal MCs in the graphical application.
-- #####for_longer_analysis
+- #### for_longer_analysis
    Contains strongly reduced data sets of the CMS detector from 2012 
    (Run B and C) to be processed in the context of the 'for_student' 
    notebook.  Also included is the parameterization of the signal 
