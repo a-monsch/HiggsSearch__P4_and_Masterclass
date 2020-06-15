@@ -25,8 +25,8 @@ presented.
 [MyBinder](www.mybinder.org). 
 This part is the advanced part and is intended either as a master class 
 lasting several days or for students in a shorter period of time 
-(`for_students` notebooks). If this is the first time that Python, 
-it is recommended to have a look at the notebook on Python basics too.
+(`for_students` notebooks). If this is the first time that Python is used, 
+it is recommended to have a look at the notebook containing Python basics too.
     
     [![Binder](https://mybinder.org/badge_logo.svg)](https://mybinder.org/v2/gh/a-monsch/HiggsSearch__P4_and_Masterclass/master)
 
@@ -84,26 +84,29 @@ with `deactivate`.
 In the MyBinder version the data sets have been downloaded automatically. 
 For the local version, the data records can either be downloaded 
 [here](https://www.dropbox.com/sh/3j648sojeimjmfh/AACeBAPUZkvsr0gHXULloRSWa?dl=0) manually and unpacked (several times) in a folder `data` or be 
-downloaded and unpacked automatically by `sh /binder/postBuild`. 
-Included in the record is:
+downloaded and unpacked automatically by `sh /binder/postBuild` (Linux). 
+Included in the record are  following folders:
 - #### for_event_display   
    Contains the `.ig` files for different decays that can be loaded in 
    [IspyWebGL](https://ispy-webgl.web.cern.ch/ispy-webgl/) (is called
-   in the notebook). With the help of the values taken there and 
+   in the notebooks). With the help of the values taken there and 
    possible combinations of the detailed tables (also in the folder), 
    the invariant mass of individual decay (four lepton decay) events can 
    be calculated.
 - #### for_widgets
-   Contains lists of the Monte Carlo (MC) Simulated four lepton invariant 
-   masses of the underground process and Higgs bosons of different masses 
+   Contains lists of the Monte Carlo (MC) simulated four lepton invariant 
+   masses of the background process and Higgs bosons of different masses 
    (signal process). Is used to display the underlying ground and 
-   individual signal MCs in the graphical application.
+   individual signal MCs in the graphical application (in combination with 
+   for_event_display calculated masses)
 - #### for_longer_analysis
    Contains strongly reduced data sets of the CMS detector from 2012 
-   (Run B and C) to be processed in the context of the 'for_student' 
+   (Run B and C, [more details](http://opendata.cern.ch/record/5500)) 
+   to be processed in the context of the 'for_student' 
    notebook.  Also included is the parameterization of the signal 
    process for different masses using a Gaussian distribution 
    (for the application of the Likelihood Ratio Test). Finally, a 
    summarized list of four lepton invariant masses from the ATLAS 
    measurement, as well as the bin entries of the histograms of the 
-   simulated background and signal process are included.
+   simulated background and signal process are included 
+   ([more details](http://opendata.cern.ch/record/15005)).
