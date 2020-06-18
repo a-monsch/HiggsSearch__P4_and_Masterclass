@@ -12,3 +12,4 @@ git+https://github.com/dsavoiu/kafe2#egg=kafe2
 tqdm
 swifter
 jupyter_contrib_nbextensions
+pip install ipywidgets
