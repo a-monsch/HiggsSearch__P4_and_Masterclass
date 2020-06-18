@@ -97,3 +97,18 @@ view:
 help:
   DE: Hilfe
   EN: Help
+range:
+  DE: Bereich
+  EN: Range
+add measurement:
+  DE: Messung hinzufuegen
+  EN: Add measurement
+delete measurement:
+  DE: Messung entfernen
+  EN: Delete measurement
+reset measurement:
+  DE: Messung zuruecksetzen
+  EN: Reset measurement
+to reset measurement type Yes:
+  DE: Zum Zurücksetzen 'Yes' eingeben
+  EN: To reset measurement type 'Yes'
