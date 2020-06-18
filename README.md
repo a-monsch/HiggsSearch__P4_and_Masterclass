@@ -30,7 +30,7 @@ it is recommended to have a look at the notebook containing Python basics too.
     
     [![Binder](https://mybinder.org/badge_logo.svg)](https://mybinder.org/v2/gh/a-monsch/HiggsSearch__P4_and_Masterclass/master)
 
-* The other part (`for_pupils` notebooks) is recommended to be executed 
+* The `for_pupils` notebooks, that have no 'remote' in their names are recommended to be executed 
 locally, since the used graphical applications in their entirety make 
 up a considerable part of the interaction with the data.
 
