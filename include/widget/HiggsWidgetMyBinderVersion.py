@@ -86,13 +86,13 @@ class HiggsWidget(object):
     
     def get_ui_components(self):
         check_boxes_mc = [(num, ipw.Checkbox(False, description=r"$m_{\mathrm{H}}$" + f" = {num} GeV",
-                                             layout=ipw.Layout(width="105px", height="30px"),
+                                             layout=ipw.Layout(width="125px", height="30px"),
                                              indent=False)) for num in self.mc_sig_name_list]
         
         ipw.BoundedFloatText = partial(ipw.BoundedFloatText,
                                        disabled=False,
                                        description="",
-                                       layout=ipw.Layout(width="150px", height="30px"))
+                                       layout=ipw.Layout(width="175px", height="30px"))
         
         float_text_mu = [(num, ipw.BoundedFloatText(description=f"$\phantom{{{num}}}\mu = $",
                                                     value=1.0, min=0.0, max=1000.0, step=0.05,
@@ -156,8 +156,8 @@ class HiggsWidget(object):
         _ui_1 = VBox([_b3, _ui_0])
         
         _out = self.build_out()
-        _out.layout.width = "70%"
-        _ui_1.layout.width = "30%"
+        _out.layout.width = "75%"
+        _ui_1.layout.width = "25%"
         
         _ui_2 = HBox([self.ui_components["select_m_option"],
                       self.ui_components["add_m_val"],
@@ -169,7 +169,7 @@ class HiggsWidget(object):
     
     def plot(self, *args, **kwargs):
         _stat_eval_sig_bac_string = ""
-        fig, ax = plt.subplots(1, 1, figsize=(13, 8))
+        fig, ax = plt.subplots(1, 1, figsize=(25, 12))
         
         bins = int(kwargs[self.ui_components["bins"].description])
         hist_range = ast.literal_eval(kwargs[self.ui_components["hist_range"].description])
