@@ -101,14 +101,26 @@ range:
   DE: Bereich
   EN: Range
 add measurement:
-  DE: Messung hinzufuegen
+  DE: Messung hinzufügen
   EN: Add measurement
+add one measurement:
+  DE: Eine Messung hinzufügen
+  EN: Add one measurement
+add n measurement:
+  DE: N Messungen hinzufügen
+  EN: Add N measurements
 delete measurement:
   DE: Messung entfernen
   EN: Delete measurement
 reset measurement:
-  DE: Messung zuruecksetzen
+  DE: Messung zurücksetzen
   EN: Reset measurement
+reset simulation:
+  DE: Simulation zurücksetzen
+  EN: Reset simulation
+simulation scaling:
+  DE: Simlationsskalierung
+  EN: Simulation scaleing
 to reset measurement type Yes:
   DE: Zum Zurücksetzen 'Yes' eingeben
-  EN: To reset measurement type 'Yes'
+  EN: To reset type 'Yes'
