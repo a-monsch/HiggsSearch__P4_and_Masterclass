@@ -21,7 +21,7 @@ presented.
  - English
 
 ## Execution viability
-* It is possible to perform the repo using 
+It is possible to perform the repo using 
 [MyBinder](www.mybinder.org). 
 Some of the notebooks rely on graphical applications that require opening in a new window. 
 There exists a `_remote_` variant of these, which should be used instead.
@@ -29,10 +29,11 @@ For the local application, both options are available (the implementation of the
 graphical applications differs slightly due to the different functional scope of the 
 packages used, but contains all important features). If this is the first time that Python 
 is used, it is recommended to have a look at the notebook containing Python basics too.
-    
-    [![Binder](https://mybinder.org/badge_logo.svg)](https://mybinder.org/v2/gh/a-monsch/HiggsSearch__P4_and_Masterclass/master)
 
-* To run locally (in Terminal/Power Shell):
+* To run the repo remotely:   
+  [![Binder](https://mybinder.org/badge_logo.svg)](https://mybinder.org/v2/gh/a-monsch/HiggsSearch__P4_and_Masterclass/master)
+
+* To run locally (following commands for Terminal/Power Shell):
 
   ``` 
   git clone https://github.com/a-monsch/HiggsSearch__P4_and_Masterclass
@@ -46,8 +47,8 @@ is used, it is recommended to have a look at the notebook containing Python basi
   # Windows
   .\venv\Scripts\activate
   ```
-  The necessary Python (>= 3.6) packages are listed below but can also be
-  downloaded automatically with 
+  The necessary Python (>= 3.6) packages are listed below (`pip install <package>`) but can also be
+  downloaded automatically via  
   ```
   pip3 install -r binder/requirements.txt
   ```
