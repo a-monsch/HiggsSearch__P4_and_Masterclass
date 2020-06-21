@@ -21,64 +21,63 @@ presented.
  - English
 
 ## Execution viability
-* It is possible to perform the repo in parts using 
+It is possible to perform the repo using 
 [MyBinder](www.mybinder.org). 
-This part is the advanced part and is intended either as a master class 
-lasting several days or for students in a shorter period of time 
-(`for_students` notebooks). If this is the first time that Python is used, 
-it is recommended to have a look at the notebook containing Python basics too.
-    
-    [![Binder](https://mybinder.org/badge_logo.svg)](https://mybinder.org/v2/gh/a-monsch/HiggsSearch__P4_and_Masterclass/master)
+Some of the notebooks rely on graphical applications that require opening in a new window. 
+There exists a `_remote_` variant of these, which should be used instead.
+For the local application, both options are available (the implementation of the individual 
+graphical applications differs slightly due to the different functional scope of the 
+packages used, but contains all important features). If this is the first time that Python 
+is used, it is recommended to have a look at the notebook containing Python basics too.
 
-* The `for_pupils` notebooks, that have no 'remote' in their names are recommended to be executed 
-locally, since the used graphical applications in their entirety make 
-up a considerable part of the interaction with the data.
+* To run the repo remotely:   
+  [![Binder](https://mybinder.org/badge_logo.svg)](https://mybinder.org/v2/gh/a-monsch/HiggsSearch__P4_and_Masterclass/master)
 
-To run locally (in Terminal/Power Shell):
+* To run locally (following commands for Terminal/Power Shell):
 
-``` 
-git clone https://github.com/a-monsch/HiggsSearch__P4_and_Masterclass
-cd HiggsSearch__P4_and_Masterclass
-```
-With an optional virtual environment:
-```
-virtualenv venv_higgs
-# Linux
-source venv_higgs/bin/activate
-# Windows
-.\venv\Scripts\activate
-```
-The necessary Python (>= 3.6) packages are listed below but can also be
-downloaded automatically with 
-```
-pip3 install -r binder/requirements.txt
-```
- - [SciPy](https://www.scipy.org/)
- - [NumPy](https://numpy.org/)
- - [Pandas](https://pandas.pydata.org/)
- - [matplotlib](https://matplotlib.org/)
- - [kafe2](https://github.com/dsavoiu/kafe2) (current master)
- - [iminuit](https://iminuit.readthedocs.io/en/latest/)
- - [PyQt5](https://www.riverbankcomputing.com/software/pyqt/intro)
- - [Jupyter](https://jupyter.org/)
- - [tqdm](https://github.com/tqdm/tqdm)
- - [jupyter contrib nbextensions](https://github.com/ipython-contrib/jupyter_contrib_nbextensions) (optional)
- - [swifter](https://github.com/jmcarpenter2/swifter)
+  ``` 
+  git clone https://github.com/a-monsch/HiggsSearch__P4_and_Masterclass
+  cd HiggsSearch__P4_and_Masterclass
+  ```
+  With an optional virtual environment:
+  ```
+  virtualenv venv_higgs
+  # Linux
+  source venv_higgs/bin/activate
+  # Windows
+  .\venv\Scripts\activate
+  ```
+  The necessary Python (>= 3.6) packages are listed below (`pip install <package>`) but can also be
+  downloaded automatically via  
+  ```
+  pip3 install -r binder/requirements.txt
+  ```
+   - [SciPy](https://www.scipy.org/)
+   - [NumPy](https://numpy.org/)
+   - [Pandas](https://pandas.pydata.org/)
+   - [matplotlib](https://matplotlib.org/)
+   - [kafe2](https://github.com/dsavoiu/kafe2) (current master)
+   - [iminuit](https://iminuit.readthedocs.io/en/latest/)
+   - [PyQt5](https://www.riverbankcomputing.com/software/pyqt/intro)
+   - [Jupyter](https://jupyter.org/)
+   - [tqdm](https://github.com/tqdm/tqdm)
+   - [jupyter contrib nbextensions](https://github.com/ipython-contrib/jupyter_contrib_nbextensions) (optional)
+   - [swifter](https://github.com/jmcarpenter2/swifter)
 
-If the virtual environment is used, a kernel for the jupyter notebooks 
-should be reregistered.
+  If the virtual environment is used, a kernel for the jupyter notebooks 
+  should be reregistered.
 
-```
-ipython kernel install --user --name=venv_higgs
-```
+  ```
+  ipython kernel install --user --name=venv_higgs
+  ```
 
-The jupyteter notebook can be started directly from the `root` 
-directory of the repository with 
-```
-jupyter notebook
-```
-After shutting down the notebook, you can leave the virtual environment 
-with `deactivate`.
+  The jupyteter notebook can be started directly from the `root` 
+  directory of the repository with 
+  ```
+  jupyter notebook
+  ```
+  After shutting down the notebook, you can leave the virtual environment 
+  with `deactivate`.
 
 ## Provided datasets
 In the MyBinder version the data sets have been downloaded automatically. 
