@@ -58,7 +58,7 @@ class HiggsWidget(object):
         return my_dict
 
     def _measurement_array_to_str(self):
-        return ",  ".join([str(round(item, 3)) for item in np.sort(self.measurement_list)])
+        return ", ".join([str(round(item, 3)) for item in np.sort(self.measurement_list)])
 
     def _measurement_histogram(self, bins=None, hist_range=None):
         return np.histogram(self.measurement_list, bins=self.bins if bins is None else bins,
@@ -114,11 +114,12 @@ class HiggsWidget(object):
                                                 self.td["delete measurement"][self.la],
                                                 self.td["reset measurement"][self.la]],
                                        intend=False)
-        m_show = ipw.Textarea(disabled=True,
-                              value=self._measurement_array_to_str(),
-                              description=f"    {self.td['measurement'][self.la]}",
-                              layout=ipw.Layout(border="0px", width="500px", height="90px"),
-                              style={"description_width": "200px"})
+
+        m_show = ipw.HTML(value=self._measurement_array_to_str(),
+                          placeholder='',
+                          description=f"    {self.td['measurement'][self.la]}: ",
+                          layout=ipw.Layout(border="0px", width="1000px", height="145px"),
+                          style={"description_width": "125px"})
 
         return {"check_boxes_mc": check_boxes_mc,
                 "float_text_mu": float_text_mu,
@@ -162,7 +163,7 @@ class HiggsWidget(object):
         _ui_2 = HBox([self.ui_components["select_m_option"],
                       self.ui_components["add_m_val"],
                       self.ui_components["m_show"]],
-                     layout=ipw.Layout(height="100px"))
+                     layout=ipw.Layout(height="150px"))
 
         _ui_final = VBox([HBox([_out, _ui_1]), _ui_2])
         self.ui = _ui_final
