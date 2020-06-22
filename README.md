@@ -91,7 +91,8 @@ Included in the record are  following folders:
    in the notebooks). With the help of the values taken there and 
    possible combinations of the detailed tables (also in the folder), 
    the invariant mass of individual decay (four lepton decay) events can 
-   be calculated.
+   be calculated. (Detailed information about the origin of the event files 
+   can be found in `README_EVENTS.md` in the folder)
 - #### for_widgets
    Contains lists of the Monte Carlo (MC) simulated four lepton invariant 
    masses of the background process and Higgs bosons of different masses 
