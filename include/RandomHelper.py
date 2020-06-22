@@ -65,3 +65,18 @@ class ToSortHelper(object):
         # noinspection PyTypeChecker
         dir_path_split[-2] = f"d{num}"
         return os.path.join(*tuple(dir_path_split))
+
+
+def check_data_state():
+    d_cont_ = os.listdir("../data")
+    look_for = ["for_long_analysis", "for_event_display", "for_widgets"]
+    
+    if any(item not in d_cont_ for item in look_for):
+        print("Some Files not found, downloadng...")
+        os.system("sh ../include/reset_data.sh")
+        if any(item not in os.listdir("../data") for item in look_for):
+            print ("An error has occurred. It may be necessary to download the data sets manually")
+        else:
+            print("...downloading complete")
+    else:
+        print("Necessary files present. Continue...")
