@@ -9,7 +9,7 @@ matplotlib==3.2.2
 iminuit==1.4.2
 pyqt5==5.15.0
 kafe2=='2.0-beta2'
-tqdm=?4.46.1
+tqdm==4.46.1
 swifter==0.305
 jupyter_contrib_nbextensions==0.5.1
 ipywidgets==7.5.1
