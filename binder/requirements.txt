@@ -8,7 +8,7 @@ pandas==1.0.5
 matplotlib==3.2.2
 iminuit==1.4.2
 pyqt5==5.15.0
-kafe2=='2.0-beta2'
+kafe2==2.0b2
 tqdm==4.46.1
 swifter==0.305
 jupyter_contrib_nbextensions==0.5.1
