@@ -79,4 +79,4 @@ def check_data_state():
         else:
             print("...downloading complete")
     else:
-        print("Necessary files present. Continue...")
+        print("Necessary folders present. Continue...")
