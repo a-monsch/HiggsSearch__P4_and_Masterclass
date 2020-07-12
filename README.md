@@ -56,9 +56,9 @@ is used, it is recommended to have a look at the notebook containing Python basi
    - [NumPy](https://numpy.org/)
    - [Pandas](https://pandas.pydata.org/)
    - [matplotlib](https://matplotlib.org/)
-   - [kafe2](https://github.com/dsavoiu/kafe2) (current master)
+   - [kafe2](https://github.com/dsavoiu/kafe2) (current master) (optional)
    - [iminuit](https://iminuit.readthedocs.io/en/latest/)
-   - [PyQt5](https://www.riverbankcomputing.com/software/pyqt/intro)
+   - [PyQt5](https://www.riverbankcomputing.com/software/pyqt/intro) (if running locally)
    - [Jupyter](https://jupyter.org/)
    - [tqdm](https://github.com/tqdm/tqdm)
    - [jupyter contrib nbextensions](https://github.com/ipython-contrib/jupyter_contrib_nbextensions) (optional)
@@ -92,7 +92,7 @@ Included in the record are  following folders:
    possible combinations of the detailed tables (also in the folder), 
    the invariant mass of individual decay (four lepton decay) events can 
    be calculated. (Detailed information about the origin of the event files 
-   can be found in `README_EVENTS.md` in the folder) [[1]](#1)[[3]](#3)[[4]](#4)
+   can be found in `README_EVENTS.md` in the folder)
 - #### for_widgets
    Contains lists of the Monte Carlo (MC) simulated four lepton invariant 
    masses of the background process and Higgs bosons of different masses 
@@ -121,6 +121,3 @@ ATLAS Collaboration. *ATLAS 13 TeV samples collection at least four leptons (ele
 
 <a id="3">[3]</a> 
 T McCauley. “A browser-based event display for the CMS Experiment at the LHCusing WebGL”. In:Journal of Physics: Conference Series898 (Okt. 2017), S. 072030. DOI: [10.1088/1742-6596/898/7/072030](10.1088/1742-6596/898/7/072030). URL: [https://doi.org/10.1088%2F1742-6596%2F898%2F7%2F072030](https://doi.org/10.1088%2F1742-6596%2F898%2F7%2F072030).  
-   
-<a id="4">[4]</a> 
-McCauley, Thomas. *Event files for CMS masterclass exercise 2014. CERN Open Data Portal*. 2014. DOI: [10.7483/OPENDATA.CMS.SSYF.EGXW](10.7483/OPENDATA.CMS.SSYF.EGXW). URL: [http://opendata.cern.ch/record/310](http://opendata.cern.ch/record/310)
