@@ -27,8 +27,10 @@ Some of the notebooks rely on graphical applications that require opening in a n
 There exists a `_remote_` variant of these, which should be used instead.
 For the local application, both options are available (the implementation of the individual 
 graphical applications differs slightly due to the different functional scope of the 
-packages used, but contains all important features). If this is the first time that Python 
-is used, it is recommended to have a look at the notebook containing Python basics too.
+packages used, but contains all important features). However, it is recommended to use the 
+`_remote` variants, as they fit better into the notebook environment. If this is the first 
+time that Python is used, it is recommended to have a look at the notebook containing 
+Python basics too.
 
 * To run the repo remotely:   
   [![Binder](https://mybinder.org/badge_logo.svg)](https://mybinder.org/v2/gh/a-monsch/HiggsSearch__P4_and_Masterclass/master)
