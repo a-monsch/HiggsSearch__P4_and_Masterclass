@@ -45,4 +45,4 @@ class HistOf(object):
                               HistOf._legend_dict["background"][self.lang],
                               HistOf._legend_dict["signal"][self.lang]])
         
-        return ax
+        return ax, hist
