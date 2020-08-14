@@ -1,6 +1,7 @@
 # -*- coding: UTF-8 -*-
 import multiprocessing as mp
 import os
+import errno
 
 import numpy as np
 import pandas as pd
@@ -47,10 +48,10 @@ class Apply(object):
         self.use_swifter = use_swifter
         self.n_cpu = n_cpu
         
-        try:
+        if type(input_) is str:
             self.data, self.name = Apply.from_string(string_name=input_, n_rows=use_n_rows)
         
-        except:
+        else:
             self.data = input_
         
         self.multi_cpu = multi_cpu
@@ -73,6 +74,9 @@ class Apply(object):
         :param n_rows: int
         :return: pd.DataFrame, str
         """
+
+        if not os.path.exists(string_name):
+            raise FileNotFoundError(errno.ENOENT, os.strerror(errno.ENOENT), string_name)
         
         print("Load " + string_name)
         data_frame = pd.read_csv(string_name, sep=";", nrows=n_rows)
