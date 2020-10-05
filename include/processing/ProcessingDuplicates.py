@@ -45,11 +45,11 @@ class ProcessDuplicates(object):
         """
         z_mass = 91.1876
         
-        df1_ = self.data_1.filter(["run", "event", "z1_mass", "z2_mass"], axis=1)
+        df1_ = self.data_1.run(["run", "event", "z1_mass", "z2_mass"], axis=1)
         df1_["frame_id"] = 1
         df1_["z1_diff"] = np.abs(df1_["z1_mass"] - z_mass)
         
-        df2_ = self.data_2.filter(["run", "event", "z1_mass", "z2_mass"], axis=1)
+        df2_ = self.data_2.run(["run", "event", "z1_mass", "z2_mass"], axis=1)
         df2_["frame_id"] = 2
         df2_["z1_diff"] = np.abs(df2_["z1_mass"] - z_mass)
         

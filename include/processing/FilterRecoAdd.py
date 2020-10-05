@@ -1,7 +1,6 @@
 # -*- coding: UTF-8 -*-
 
 import numpy as np
-import swifter
 
 from .CalcAndAllowerInit import AllowedInit, CalcInit
 from .ProcessingRow import ProcessingRow
@@ -14,8 +13,6 @@ def array(*args, **kwargs):
 
 _oldarray = np.array
 np.array = _oldarray
-
-sw_temp_ = swifter
 
 
 class FilterStr(ProcessingRow):
@@ -39,7 +36,7 @@ class FilterStr(ProcessingRow):
         if any("allowed" in it for it in kwargs.keys()): cls.allowed_instance = kwargs["allowed_instance"]
     
     # Filter No 1
-    def check_type(self, look_for="muon"):
+    def filter_type(self, look_for="muon"):
         """
         Filter checks the classification of the leptons.
 
@@ -73,7 +70,7 @@ class FilterStr(ProcessingRow):
             raise TypeError("'look_for' can only be: 'muon', 'electron' or 'both'")
     
     # Filter No 2
-    def check_q(self, look_for="muon"):
+    def filter_electric_charge(self, look_for="muon"):
         """
         Filter that checks whether an electrically neutral charge
         combination can be formed from the leptons contained in the event.
@@ -107,7 +104,7 @@ class FilterStr(ProcessingRow):
             raise TypeError("'look_for' can only be: 'muon', 'electron' or 'both'")
     
     # Filter No 3
-    def check_min_pt(self, look_for="muon"):
+    def filter_pt_minimum(self, look_for="muon"):
         """
         Filter of leptons removed whose transverse impulse is smaller than the minimum allowed.
         Also the transversal impulse is added.
@@ -150,7 +147,7 @@ class FilterStr(ProcessingRow):
             raise TypeError("'look_for' can only be: 'muon', 'electron' or 'both'")
     
     # Filter No 4
-    def check_eta(self, look_for="muon"):
+    def filter_eta(self, look_for="muon"):
         """
         Filter of leptons removed based on the calculated pseudorapidity.
         Also the pseudorapidity is added.
@@ -195,7 +192,7 @@ class FilterStr(ProcessingRow):
             raise TypeError("'look_for' can only be: 'muon', 'electron' or 'both'")
     
     # Filter No 5
-    def check_misshit(self, look_for="electron"):
+    def filter_misshit(self, look_for="electron"):
         """
         Filters out electrons from an event that have an insufficient number of missing hints.
 
@@ -229,7 +226,7 @@ class FilterStr(ProcessingRow):
             raise TypeError("'look_for' can only be: 'muon', 'electron' or 'both'")
     
     # Filter No 6
-    def check_rel_iso(self, look_for="muon"):
+    def filter_rel_iso(self, look_for="muon"):
         """
         Filter of leptons discarded based on relative isolation.
 
@@ -264,7 +261,7 @@ class FilterStr(ProcessingRow):
             raise TypeError("'look_for' can only be: 'muon', 'electron' or 'both'")
     
     # Filter No 7
-    def check_impact_param(self, look_for="muon"):
+    def filter_impact_param(self, look_for="muon"):
         """
         Filter of leptons discarded based on the impact parameter.
 
@@ -301,7 +298,7 @@ class FilterStr(ProcessingRow):
         return None
     
     # Filter No 8
-    def check_exact_pt(self, look_for="muon"):
+    def filter_pt_exact(self, look_for="muon"):
         """
         Filters leptons based on the exact required transverse momentum of each lepton in an event.
 
@@ -341,7 +338,7 @@ class FilterStr(ProcessingRow):
             raise TypeError("'look_for' can only be: 'muon', 'electron' or 'both'")
     
     # Filter No 9
-    def check_m_2l(self, look_for="muon"):
+    def filter_2_lepton_mass(self, look_for="muon"):
         """
         Filters leptons according to the minimum required two lepton invariant masses.
 
@@ -392,7 +389,7 @@ class FilterStr(ProcessingRow):
             raise TypeError("'look_for' can only be: 'muon', 'electron' or 'both'")
     
     # Filter No 10
-    def check_m_4l(self, look_for="muon"):
+    def filter_4_lepton_mass(self, look_for="muon"):
         """
         Filters leptons according to the minimum required four lepton invariant masses.
 
@@ -461,7 +458,7 @@ class AddVariable(ProcessingRow):
         if any("calc" in it for it in kwargs.keys()): cls.calc_instance = kwargs["calc_instance"]
         if any("allowed" in it for it in kwargs.keys()): cls.allowed_instance = kwargs["allowed_instance"]
     
-    def pt(self, look_for="muon"):
+    def add_pt(self, look_for="muon"):
         """
         Adds transverse pulse to the pandas series.
 
@@ -494,7 +491,7 @@ class AddVariable(ProcessingRow):
         else:
             raise TypeError("'look_for' can only be: 'muon', 'electron' or 'both'")
     
-    def eta(self, look_for="muon"):
+    def add_eta(self, look_for="muon"):
         """
         Adds pseudorapidity to the pandas series.
 
@@ -529,7 +526,7 @@ class AddVariable(ProcessingRow):
         else:
             raise TypeError("'look_for' can only be: 'muon', 'electron' or 'both'")
     
-    def phi(self, look_for="muon"):
+    def add_phi(self, look_for="muon"):
         """
         Adds phi angle to the pandas series.
 
@@ -584,7 +581,7 @@ class Reconstruct(ProcessingRow):
         if any("calc" in it for it in kwargs.keys()): cls.calc_instance = kwargs["calc_instance"]
         if any("allowed" in it for it in kwargs.keys()): cls.allowed_instance = kwargs["allowed_instance"]
     
-    def zz(self, look_for="muon"):
+    def reconstruct_zz(self, look_for="muon"):
         """
         Reconstructs a Z boson pair and adds it and all the necessary sizes to the pandas series.
 
@@ -660,7 +657,7 @@ class Reconstruct(ProcessingRow):
         else:
             raise TypeError("'look_for' can only be: 'muon', 'electron' or 'both'")
     
-    def mass_4l_out_zz(self, look_for="muon"):
+    def reconstruct_4_lepton_mass_from_zz(self, look_for="muon"):
         """
         Reconstructs the four lepton invariant masses from the already reconstructed Z boson pair.
 

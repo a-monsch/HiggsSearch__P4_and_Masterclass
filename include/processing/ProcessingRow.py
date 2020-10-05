@@ -40,7 +40,7 @@ class ProcessingRow(object):
     
     def __to_str_from_str(self, variable, accept):
         """
-        Converts str back to str after applying a boolean filter.
+        Converts str back to str after applying a boolean run.
 
         :param variable: str
         :param accept: ndarray
@@ -91,7 +91,7 @@ class ProcessingRow(object):
     
     def reduce_row(self, accept_array):
         """
-        Kicks all leptons with the corresponding sizes out of the series using the boolean filter.
+        Kicks all leptons with the corresponding sizes out of the series using the boolean run.
 
         :param accept_array: ndarray
                              1D or 2D array containing data with "bool" type.
@@ -112,7 +112,7 @@ class ProcessingRow(object):
     
     def eval_on_length(self, accept_array):
         """
-        Evaluates using the "True" entries of the boolean filter if the minimum
+        Evaluates using the "True" entries of the boolean run if the minimum
         number of leptons in the event is met and replace "run" with a "np.nan" if not.
 
         :param accept_array: ndarray
@@ -135,7 +135,7 @@ class ProcessingRow(object):
     
     def eval_and_reduce(self, to_accept_list=None, to_accept_bool=None):
         """
-        Evaluates and reduces on the basis of a boolean filter in form of a list
+        Evaluates and reduces on the basis of a boolean run in form of a list
         or a single value whether the "pandas series" should be discarded or only reduced.
 
         :param to_accept_list: nrray

@@ -2,7 +2,6 @@
 from itertools import combinations, product
 
 import numpy as np
-import swifter
 
 
 def array(*args, **kwargs):
@@ -12,8 +11,6 @@ def array(*args, **kwargs):
 
 _oldarray = np.array
 np.array = _oldarray
-
-sw_temp_ = swifter
 
 
 class AllowedInit(object):

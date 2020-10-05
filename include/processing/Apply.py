@@ -1,11 +1,12 @@
 # -*- coding: UTF-8 -*-
+import errno
 import multiprocessing as mp
 import os
-import errno
 
 import numpy as np
 import pandas as pd
-import swifter
+
+from tqdm import tqdm
 
 from .CalcAndAllowerInit import CalcInit, AllowedInit
 from .FilterRecoAdd import FilterStr, Reconstruct, AddVariable
@@ -20,7 +21,6 @@ def array(*args, **kwargs):
 _oldarray = np.array
 np.array = _oldarray
 
-sw_temp_ = swifter
 
 
 class Apply(object):
@@ -41,11 +41,9 @@ class Apply(object):
                  calc_instance=CalcInit,
                  allowed_instance=AllowedInit,
                  multi_cpu=True,
-                 n_cpu=mp.cpu_count(),
-                 use_swifter=False):
+                 n_cpu=mp.cpu_count()):
         
         self.particle_type = particle_type
-        self.use_swifter = use_swifter
         self.n_cpu = n_cpu
         
         if type(input_) is str:
@@ -74,7 +72,7 @@ class Apply(object):
         :param n_rows: int
         :return: pd.DataFrame, str
         """
-
+        
         if not os.path.exists(string_name):
             raise FileNotFoundError(errno.ENOENT, os.strerror(errno.ENOENT), string_name)
         
@@ -92,15 +90,30 @@ class Apply(object):
         """
         if any("calc" in it for it in kwargs.keys()): Apply.calc_instance = kwargs["calc_instance"]
         if any("allowed" in it for it in kwargs.keys()): Apply.allowed_instance = kwargs["allowed_instance"]
-        if any("filter" in it for it in kwargs.keys()): Apply.filter_instance = kwargs["filter_instance"]
-        if any("reconstruct" in it for it in kwargs.keys()):
+        if any("run" in it for it in kwargs.keys()): Apply.filter_instance = kwargs["filter_instance"]
+        if any("run" in it for it in kwargs.keys()):
             Apply.reconstruction_instance = kwargs["reconstruct_instance"]
-        if any("add_variable" in it for it in kwargs.keys()):
+        if any("run" in it for it in kwargs.keys()):
             Apply.add_variable_instance = kwargs["add_variable_instance"]
     
-    def get_partial(self, arg_tuple=False, **kwargs):
+    def _verbose(self, msg_, cls_, fnc_, shape_, flush_=False):
         """
-        Partially constructs and evaluates the pandas apply function using the given arguments.
+        Function to print the performed operation.
+        
+        :param msg_: str
+        :param cls_: python class
+        :param fnc_: str
+        :param shape_: tuple
+        :param flush_: bool
+        """
+        if flush_:
+            print(f"{msg_: <{7}} {cls_.__name__: <{12}}: {fnc_: <{35}}; shape: {str(shape_): <{15}}", end="\r", flush=True)
+        if not flush_:
+            print(f"{msg_: <{7}} {cls_.__name__: <{12}}: {fnc_: <{35}}; shape: {str(shape_): <{15}}")
+    
+    def get_partial(self, arg_tuple, **kwargs):
+        """
+        Partially constructs and evaluates the pandas run function using the given arguments.
 
         :param arg_tuple: tuple
                           (class_name, used_name, data_frame verbose)
@@ -110,16 +123,18 @@ class Apply(object):
         """
         cls_, fnc_, df, vb_ = arg_tuple if arg_tuple else (kwargs["used_class"], kwargs["used_name"], kwargs["data_frame"], True)
         
-        if vb_:
-            print(f"Do   {cls_.__name__: <{12}}: {fnc_: <{20}}; shape: {str(df.shape): <{15}}", end="\r", flush=True)
+        if vb_: self._verbose("Done", cls_, fnc_, df.shape, True)
+        
         if not df.empty:
-            if not self.use_swifter:
+            if self.multi_cpu:
                 df = df.apply(lambda x: getattr(cls_(x, list(df)), fnc_)(look_for=self.particle_type), axis=1)
-            if self.use_swifter:
-                df = df.swifter.apply(lambda x: getattr(cls_(x, list(df)), fnc_)(look_for=self.particle_type), axis=1)
+            if not self.multi_cpu:
+                tqdm.pandas()
+                df = df.progress_apply(lambda x: getattr(cls_(x, list(df)), fnc_)(look_for=self.particle_type), axis=1)
             df = df.dropna()
-            if vb_:
-                print(f"Done {cls_.__name__: <{12}}: {fnc_: <{15}}; shape: {str(df.shape): <{15}}")
+            if vb_: self._verbose("Done", cls_, fnc_, df.shape)
+            return df
+        if df.empty:
             return df
     
     def __multiprocessing(self, **kwargs):
@@ -130,18 +145,18 @@ class Apply(object):
         :return: pd.DataFrame
         """
         if not kwargs["data_frame"].empty:
-            df_split = np.array_split(kwargs["data_frame"], self.n_cpu)
+            df_split = [frame_ for frame_ in np.array_split(kwargs["data_frame"], self.n_cpu) if not frame_.empty]
+            
             pass_args = [(kwargs["used_class"], kwargs["used_name"], frame_, False) for frame_ in df_split]
-            pool = mp.Pool(processes=self.n_cpu)
-            print(
-                f'Do   {kwargs["used_class"].__name__: <{12}}: {kwargs["used_name"]: <{20}}; shape: {str(kwargs["data_frame"].shape): <{15}}',
-                end="\r", flush=True)
-            results = pool.map(self.get_partial, pass_args)
-            pool.close()
-            pool.join()
-            collected_frame = pd.concat([item for item in results])
-            print(
-                f'Done {kwargs["used_class"].__name__: <{12}}: {kwargs["used_name"]: <{20}}; shape: {str(collected_frame.shape): <{15}}')
+            
+            self._verbose("Do", kwargs["used_class"], kwargs["used_name"], kwargs["data_frame"].shape, True)
+
+            with mp.Pool(processes=self.n_cpu) as p:
+                results_ = p.map(self.get_partial, pass_args)
+                collected_frame = pd.concat([item for item in results_])
+
+            self._verbose("Done", kwargs["used_class"], kwargs["used_name"], collected_frame.shape)
+            
             return collected_frame
         else:
             return kwargs["data_frame"]
@@ -164,73 +179,36 @@ class Apply(object):
         """
         Shows all possible reconstruction, filtering processes as well as the sizes that can be added.
         """
-        print("Possible Filter:\n" +
-              "- 'check_type'\n- 'check_q'\n- 'check_min_pt'\n- 'check_eta'\n- 'check_misshit'\n" +
-              "- 'check_rel_iso'\n- 'check_impact_param'\n- 'check_exact_pt'\n- 'check_m_2l'\n- 'check_m_4l'\n" +
-              "\n")
-        
-        print("Possible Reconstructions:\n" +
-              "- 'zz'\n" +
-              "- 'mass_4l_out_zz'\n" +
-              "\n")
-        
-        print("Adding possible variables: \n" +
-              "- 'pt'\n" +
-              "- 'eta'\n" +
-              "- 'phi'\n")
-    
-    def add_variable(self, variable_name, quicksave=None):
-        """
-        Adds the size variable_name to the pd.DataFrame.
 
-        :param variable_name: str
-        :param quicksave: str
-        :return: pd.DataFrame
-        """
-        if not self.multi_cpu:
-            self.data = self.get_partial(used_class=self.add_variable_instance, used_name=variable_name,
-                                         data_frame=self.data)
-        if self.multi_cpu:
-            self.data = self.__multiprocessing(used_class=self.add_variable_instance, used_name=variable_name,
-                                               data_frame=self.data)
+        print("\nPossible Filter:")
+        print("\n".join(reversed([f" - {item}" for item in dir(Apply.filter_instance) if "filter_" in item])))
         
-        self.__do_quicksave(name=quicksave)
-    
-    def filter(self, filter_name, quicksave=None):
-        """
-        Applies the filter filter_name to the pd.DataFrame.
+        print("\nPossible Reconstructions:")
+        print("\n".join(reversed([f" - {item}" for item in dir(Apply.reconstruction_instance) if "reco" in item])))
+        
+        print("\nAdding possible variables:")
+        print("\n".join(reversed([f" - {item}" for item in dir(Apply.add_variable_instance) if "add" in item and "to_row" not in item])))
 
-        :param filter_name: str
-        :param quicksave: str
-        :return: pd.DataFrame
-        """
-        if not self.multi_cpu:
-            self.data = self.get_partial(used_class=self.filter_instance, used_name=filter_name, data_frame=self.data)
+    def _raise_error(self, method, args):
+        if method == self.run:
+            raise NameError(f"{args} operation does not exist. Use Apply.help() to list all possible methods")
         
+    def run(self, name, quicksave=None):
+
+        _used_class = self.filter_instance if "filter" in name else(
+                        self.reconstruction_instance if "reco" in name else(
+                            self.add_variable_instance if "add" in name else(
+                                self._raise_error(self.run, name))))
+        _used_func = name
+        
+        if not self.multi_cpu:
+            self.data = self.get_partial(arg_tuple=False, used_class=_used_class, used_name=name, data_frame=self.data)
         if self.multi_cpu:
-            self.data = self.__multiprocessing(used_class=self.filter_instance, used_name=filter_name,
-                                               data_frame=self.data)
+            self.data = self.__multiprocessing(used_class=_used_class, used_name=name, data_frame=self.data)
         
         self.__do_quicksave(quicksave)
     
-    def reconstruct(self, reco_name, quicksave=None):
-        """
-        Applies the reconstruction step reco_name to the pd.DataFrame.
-
-        :param reco_name: str
-        :param quicksave: str
-        :return: pd.DataFrame
-        """
-        if not self.multi_cpu:
-            self.data = self.get_partial(used_class=self.reconstruction_instance, used_name=reco_name,
-                                         data_frame=self.data)
-        if self.multi_cpu:
-            self.data = self.__multiprocessing(used_class=self.reconstruction_instance, used_name=reco_name,
-                                               data_frame=self.data)
-        
-        self.__do_quicksave(quicksave)
-    
-    def hist_of_variable(self, variable, bins, hist_range, filter_=None, **kwargs):
+    def hist(self, variable, bins, hist_range, filter_=None, **kwargs):
         """
         Draws the current unscaled distribution of the variable "variable".
 
@@ -242,12 +220,12 @@ class Apply(object):
                         [str, (float, float)]; [filter_based_on_row_name, (lower_value, upper_value)]
         :param kwargs: matplotlib drawing kwargs
         """
-        hist = Hist(bins=bins, hist_range=hist_range)
+        _hist = Hist(bins=bins, hist_range=hist_range)
         
         col__ = []
         if isinstance(variable, str): col__ = [it for it in self.data.columns if variable in it or it in variable]
         
         if filter_ is not None: col__.append(filter_[0])
         
-        hist.fill_hist(name="undefined", array_of_interest=hist.convert_column(col_=self.data.filter(col__), filter_=filter_))
-        hist.draw(pass_name="undefined", **kwargs)
+        _hist.fill_hist(name="undefined", array_of_interest=_hist.convert_column(col_=self.data.run(col__), filter_=filter_))
+        _hist.draw(pass_name="undefined", **kwargs)
