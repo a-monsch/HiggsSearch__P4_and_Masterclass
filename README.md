@@ -64,7 +64,6 @@ Python basics too.
    - [Jupyter](https://jupyter.org/)
    - [tqdm](https://github.com/tqdm/tqdm)
    - [jupyter contrib nbextensions](https://github.com/ipython-contrib/jupyter_contrib_nbextensions) (optional)
-   - [swifter](https://github.com/jmcarpenter2/swifter)
 
   If the virtual environment is used, a kernel for the jupyter notebooks 
   should be reregistered.
