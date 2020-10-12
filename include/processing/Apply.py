@@ -220,12 +220,12 @@ class Apply(object):
                         [str, (float, float)]; [filter_based_on_row_name, (lower_value, upper_value)]
         :param kwargs: matplotlib drawing kwargs
         """
-        _hist = Hist(bins=bins, hist_range=hist_range)
+        hist_ = Hist(bins=bins, hist_range=hist_range)
         
         col__ = []
         if isinstance(variable, str): col__ = [it for it in self.data.columns if variable in it or it in variable]
         
         if filter_ is not None: col__.append(filter_[0])
         
-        _hist.fill_hist(name="undefined", array_of_interest=_hist.convert_column(col_=self.data.run(col__), filter_=filter_))
-        _hist.draw(pass_name="undefined", **kwargs)
+        hist_.fill_hist(name="undefined", array_of_interest=hist_.convert_column(col_=self.data.filter(col__), filter_=filter_))
+        hist_.draw(pass_name="undefined", **kwargs)
