@@ -22,7 +22,7 @@ class ProcessingRow(object):
         self.row = row
         self.names = name_list
         self.pairs = list(zip(name_list, row))
-        self.ignore = ["run", "event", "luminosity", "z1_index", "z2_index", "z1_mass", "z2_mass", "z1_tag", "z2_tag"]
+        self.ignore = ["run", "event", "luminosity", "luminosity_section", "z1_index", "z2_index", "z1_mass", "z2_mass", "z1_tag", "z2_tag"]
     
     @staticmethod
     def __to_str(variable):
