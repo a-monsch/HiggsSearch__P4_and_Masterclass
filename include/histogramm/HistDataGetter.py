@@ -1,9 +1,12 @@
 import os
+import warnings
 
 import numpy as np
 import pandas as pd
 
 from .Hist import Hist
+
+warnings.filterwarnings("ignore", category=np.VisibleDeprecationWarning)
 
 
 def array(*args, **kwargs):
@@ -28,7 +31,6 @@ class HistDataGetter(object):
         self.ru_dir = ru_dir
         self.mc_dir = mc_dir
         
-        # self.info = [["2012"], ["A-D"]] if info is None else info
         self.info = [["2012"], ["B", "C"]] if info is None else info
     
     def get_mc_raw(self, column_name="mass_4l", tag="Background".lower()):
@@ -48,12 +50,12 @@ class HistDataGetter(object):
         if tag.lower() == "background":
             files_ = [it for it in raw_file_list if "_H_to_" not in it]
             names_bac_mc_ = [f"mc_track_ZZ_{'4mu' if '4mu' in it else ('4el' if '4el' in it else '2el2mu')}_{self.info[0][0]}" for it in files_]
-            hist.fill_hist_from_dir(col_=column_name, dir_=None, info=self.info, name_bac_mc_=names_bac_mc_, file_list_=files_)
+            hist.fill_hist_from_dir(column=column_name, directory=None, info=self.info, name_mc_bac=names_bac_mc_, file_list=files_)
         
         if tag.lower() == "signal":
             files_ = [it for it in raw_file_list if "_H_to_" in it]
             names_sig_mc_ = [f"mc_track_H_ZZ_{'4mu' if '4mu' in it else ('4el' if '4el' in it else '2el2mu')}_{self.info[0][0]}" for it in files_]
-            hist.fill_hist_from_dir(col_=column_name, dir_=None, info=self.info, name_sig_mc_=names_sig_mc_, file_list_=files_)
+            hist.fill_hist_from_dir(column=column_name, directory=None, info=self.info, name_mc_sig=names_sig_mc_, file_list=files_)
         
         return hist
     
@@ -66,7 +68,7 @@ class HistDataGetter(object):
         hist = Hist(bins=self.bins, hist_range=self.hist_range)
         hist.set_empty_bin(["data", "mc_bac", "mc_sig"])
         
-        hist.fill_hist_from_dir(col_="mass_4l", dir_=self.mc_dir, info=self.info)
+        hist.fill_hist_from_dir(column="mass_4l", directory=self.mc_dir, info=self.info)
         return hist
     
     def get_data_raw(self, column_name="mass_4l"):
@@ -74,7 +76,7 @@ class HistDataGetter(object):
         Fetches the individual measuring points of a specific column in a selected range self.hist_range.
 
         Note: This does not have to be stored in a hist object, but it has
-              the advantage that additional sizes are stored with it.
+              the advantage that additional quantities are stored with it.
               Can possibly be rewritten.
 
         :param column_name: str

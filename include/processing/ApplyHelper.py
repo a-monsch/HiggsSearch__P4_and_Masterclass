@@ -21,37 +21,9 @@ class ProcessHelper(object):
     """
     
     @staticmethod
-    def create_tuple(file_path):
-        """
-        Creates a list of namedtuple consisting of the respective names and the corresponding leptons
-        ("muon", "lelectron" or "both").
-
-        :param file_path: str
-        :return: list
-                 [Pair("name", "particle"), (...), ...]
-        """
-        data_type = [("ru", "FourElectron", "FourMuon"), ("mc", "_4el_", "_4mu_")]
-        filename = [file_path + item for item in os.listdir(file_path)]
-        filetuple = []
-        used_names = data_type[0]
-        pair = namedtuple("Pair", "name, particle")
-        if "mc_" in file_path:
-            used_names = data_type[1]
-        for item in filename:
-            if used_names[1] in item:
-                filetuple.append(pair(item, "electron"))
-                continue
-            if used_names[2] in item:
-                filetuple.append(pair(item, "muon"))
-                continue
-            else:
-                filetuple.append(pair(item, "both"))
-        return filetuple
-    
-    @staticmethod
     def strip_affix(name):
         """
-        Removes the affix separated by "_" from the folder and the filename.
+        Removes the affix separated by "_" from the folder and the file.
 
         :param name: str
         :return: str
@@ -76,32 +48,22 @@ class ProcessHelper(object):
         return os.path.join(to_place_path, name_).replace("\\", "/")
     
     @staticmethod
-    def print_status_bar(i, tot_, flush=True, end="\r"):
-        """
-        Status bar printed for loops during the loops.
-
-        Note: Best to replace it with tqdm and remove it at the end.
-
-        :param i: int
-        :param tot_: list or int
-        :param flush: bool
-        :param end: str
-        """
-        if type(tot_).__name__ == "int":
-            print(f"[{'#' * (i + 1): <{tot_}}] {round((i + 1) / tot_) * 100}%", end=end, flush=flush)
-        else:
-            print(f"[{'#' * (i + 1): <{len(tot_)}}] {round((i + 1) / len(tot_) * 100)}%", end=end, flush=flush)
-    
-    @staticmethod
     def print_possible_variables(pass_item):
         """
-        Shows which sizes can be histographed in the given pd.DataFrame or pd.DataFrame.columns.
+        Shows which quantities can be displayed in form of a histogram in the given
+        pd.DataFrame or pd.DataFrame.columns.
 
         :param pass_item: list
         :return: list
         """
         pit = []
-        if isinstance(pass_item, list): pit = pass_item
-        if isinstance(pass_item, str): pit = list(pd.read_csv(pass_item, sep=";").columns)
-        if not isinstance(pass_item, str) and not isinstance(pass_item, list): pit = list(pass_item.columns)
+        if isinstance(pass_item, list):
+            pit = pass_item
+        if isinstance(pass_item, str):
+            pit = list(pd.read_csv(pass_item, sep=";").columns)
+        if not isinstance(pass_item, str) and not isinstance(pass_item, list):
+            pit = list(pass_item.columns)
+        
+        pit = [item for item in pit if not any(item in it or it in item for it in ["index", "tag"])]
+        
         return list(set([it.replace("muon_", "").replace("electron_", "").replace("_el", "").replace("_mu", "") for it in pit]))

@@ -1,49 +1,77 @@
 # -*- coding: UTF-8 -*-
 import math
+import warnings
 
 import numpy as np
 import scipy.stats as scst
 
+warnings.filterwarnings("ignore", category=np.VisibleDeprecationWarning)
+
 
 class HistHelper(object):
     """
-    Class with additional functions that can be used for histograming and all related functions.
+    Class with additional functions that can be used for histograming and delete_all related functions.
     """
     
     @staticmethod
-    def convert_column(col_, filter_=None):
+    def convert_column(col_, lepton_number=None, filter_by=None, **kwargs):
         """
         Converts a pandas array containing str, which in turn contain the necessary single lepton variables, into np.ndarrays.
         For the filters "mass_4l" or "z1_mass" or "z2_mass" are available.
-        All rows that do not match the filter will be removed.
+        All rows that do not match the filter_by will be removed.
         Afterwards the str array is converted into float arrays.
 
         :param col_: pd.array
                      1D array containing data with "float" or "int" type.
-        :param filter_: list
+        :param lepton_number: int or list containing the desired leptons
+        :param filter_by: list
                         ["column_name", (lower_value_limit, upper_value_limit)]
         :return: ndarray
                  1D array containing data with "float" type.
         """
         pass_array = None
-        if filter_ is not None:
-            filter_array = (col_[filter_[0]].values > filter_[1][0]) & (col_[filter_[0]].values < filter_[1][1])
-            col_ = col_.drop([filter_[0]], axis=1)
+        if filter_by is not None:
+            filter_array = (col_[filter_by[0]].values > filter_by[1][0]) & (col_[filter_by[0]].values < filter_by[1][1])
+            col_ = col_.drop([filter_by[0]], axis=1)
             pass_array = col_.values
             pass_array = pass_array[filter_array]
         
-        if filter_ is None:
+        if filter_by is None:
             pass_array = col_.values
+        
+        _shape = pass_array.shape
         
         try:
             pass_array = np.concatenate(pass_array)
-        except:
+        except ValueError:
             pass
         
         try:
-            pass_array = np.concatenate([np.array(item.split(","), dtype=float) for item in pass_array])
-        except:
-            pass
+            if type(pass_array[0]) == str:
+                if lepton_number is not None:
+                    
+                    _cut = [lepton_number] if isinstance(lepton_number, int) else (lepton_number if isinstance(lepton_number, list) else None)
+                    _pass_array = []
+                    
+                    for item in pass_array:
+                        _tmp_full, _tmp_part = np.array(item.split(","), dtype=float), []
+                        
+                        for n in _cut:
+                            try:
+                                _tmp_part.append(_tmp_full[n])
+                            except IndexError:
+                                continue
+                        _pass_array.append(np.array(_tmp_part))
+                    pass_array = np.array(_pass_array)
+                    
+                    try:
+                        pass_array = np.concatenate(pass_array)
+                    except:
+                        pass
+                else:
+                    pass_array = np.concatenate([np.array(item.split(","), dtype=float) for item in pass_array])
+        except IndexError:
+            return np.array([])
         
         return pass_array
     

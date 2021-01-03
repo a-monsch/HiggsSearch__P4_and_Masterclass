@@ -33,14 +33,14 @@ class PlotHelper(object):
     @staticmethod
     def get_x_and_optional_nll(nll_vec_obj_=None, p_=(), np_=100, extend_=False):
         """
-        Creates an array for a scan of the given size and optional nagative
+        Creates an array for a scan of the given size and optional negative
         logarithm of likelihood.
 
         :param nll_vec_obj_: np.vectorized function
         :param p_: tuple
                    (mu - sigma_left, sigma, mu + sigma_right)
         :param np_: int
-                    numper of points used
+                    number of points used
         :param extend_: bool
                         if p_ contains 3 points this option try to extend to next sigma values.
         :return: ndarray or tuple

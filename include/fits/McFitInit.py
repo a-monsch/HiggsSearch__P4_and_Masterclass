@@ -32,7 +32,6 @@ class McFitInit(object):
         self.bins = bins
         self.hist_range = hist_range
         self.tag = tag
-        # self.info = [["2012"], ["A-D"]] if info is None else info
         self.info = [["2012"], ["B", "C"]] if info is None else info
         self.mc_dir = mc_dir
         self.ru_dir = ru_dir
@@ -91,8 +90,6 @@ class McFitInit(object):
         The kafe2 object is cached.
 
         :param used_func: function
-        """
-        """
         Function to create a kafe2 fit object
         
         :param used_func: function

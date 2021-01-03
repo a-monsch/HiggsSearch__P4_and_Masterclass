@@ -2,12 +2,18 @@
 
 import contextlib
 import os
+import warnings
 
 import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
 
 from include.histogramm.HistHelper import HistHelper
+from ..name_alias import get_alias
+
+warnings.filterwarnings("ignore", category=np.VisibleDeprecationWarning)
+
+alias = get_alias()
 
 
 def array(*args, **kwargs):
@@ -24,7 +30,7 @@ class Hist(HistHelper):
     Class that creates a histogram and, if necessary, corrects and draws or saves it according to the conditions.
     """
     
-    def __init__(self, bins, hist_range, signal_mass_mc=None, save_dir="."):
+    def __init__(self, bins, hist_range, signal_mass_mc=None, save_dir=".", info=None):
         self.__cross_sec = {"2011": {"ZZ_4mu": 66.09, "ZZ_4el": 66.09, "ZZ_2el2mu": 152, "H_ZZ": 5.7},
                             "2012": {"ZZ_4mu": 76.91, "ZZ_4el": 76.91, "ZZ_2el2mu": 176.7, "H_ZZ": 6.5}}
         self.__k_factor = {"2011": {"ZZ_4mu": 1.386, "ZZ_4el": 1.386, "ZZ_2el2mu": 1.386, "H_ZZ": 1.0},
@@ -46,6 +52,8 @@ class Hist(HistHelper):
         self.bin_width = np.abs(self.x_range[0] - self.x_range[1])
         
         self.data = {}
+        
+        self.info = info if info is not None else [["2012"], ["B", "C"]]
     
     def create_dir(self, dir_="./histogramms"):
         """
@@ -93,14 +101,15 @@ class Hist(HistHelper):
         :return: ndarray
                  1D array containing correction factor with "float" type.
         """
-        if isinstance(run, str): run = [run]
+        if isinstance(run, str):
+            run = [run]
         tot_luminosity = np.sum(lum for run_, lum in self.__lumen[year].items() if run_ in run)
         
         fac_ = self.__k_factor[year][process] * self.__cross_sec[year][process] / self.__event_num_mc[year][process]
         
         return tot_luminosity * fac_
     
-    def fill_hist(self, name, array_of_interest, info=None, get_raw=False):
+    def fill(self, name, array_of_interest, info=None, get_raw=False):
         """
         Fills the created histogram "name" with the array "array_of_interests".
         If "track" is included in the name, all intermediate steps and the corresponding
@@ -137,10 +146,11 @@ class Hist(HistHelper):
     
     @staticmethod
     def _get_cutted_list_from_dir(dir_, years_, runs_):
-        if "ru_" in dir_:
+        if all(any(it in filename for it in alias["data types"].aliases_of("run")) for filename in os.listdir(dir_)):
             return [os.path.join(dir_, item) for item in os.listdir(dir_) if
                     any((f"{year}{run}" in item) or (year in item and run == "A-D") for year in years_ for run in runs_)]
-        if "mc_" in dir_:
+        
+        if all(any(it in filename for it in alias["data types"].aliases_of("mc")) for filename in os.listdir(dir_)):
             return [os.path.join(dir_, item) for item in os.listdir(dir_) if any(year in item for year in years_)]
     
     def _get_name_from_data_dict(self, name):
@@ -151,6 +161,7 @@ class Hist(HistHelper):
         :param name: str
         :return: str
         """
+        
         return name if not [k for k in self.data if name in k] else [k for k in self.data if name in k][0]
     
     def _get_name_list(self, name_in_dict, file_list, glob_name_):
@@ -165,61 +176,72 @@ class Hist(HistHelper):
         """
         return [self._get_name_from_data_dict(name=name_in_dict) for _ in file_list] if glob_name_ is None else glob_name_
     
-    def fill_hist_from_dir(self, col_, dir_=None, file_list_=None, info=None, filter_=None,
-                           name_data_=None, name_sig_mc_=None, name_bac_mc_=None,
+    def fill_hist_from_dir(self, column, directory=None, file_list=None, info=None, filter_by=None,
+                           name_data=None, name_mc_sig=None, name_mc_bac=None, lepton_number=None,
                            **kwargs):
         """
-        Fills the histogram according to the used files in dir_ or file_list_ and
+        Fills the histogram according to the used files in directory or file_list_ and
         saves all intermediate steps if get_raw is passed.
-        See self.fill_hist(...).
+        See self.fill(...).
 
 
-        :param col_: str
-        :param dir_: str
+        :param column: str
+        :param directory: str
                      folder from which all files are read
         :param info: list
                      [["year"], ["run"]]
-        :param filter_: list
+        :param lepton_number: int or list containing the desired leptons
+        :param filter_by: list
                         ["column_name", (lower_value_limit, upper_value_limit)]
-        :param name_data_: list
-                           1D list containing all histogramm enrty names of data len(file_list) (optional)
+        :param name_data: list
+                           1D list containing all histogram entry names of data len(file_list) (optional)
                            optional: in case you want create different empty bins
-        :param name_sig_mc_: list
-                             1D list containing all histogramm enrty names of signal processes len(file_list) (optional)
+        :param name_mc_sig: list
+                             1D list containing all histogram entry names of signal processes len(file_list) (optional)
                              optional: in case you want create different empty bins
-        :param name_bac_mc_: list
-                             1D list containing all histogramm enrty names of background processes len(file_list) (optional)
+        :param name_mc_bac: list
+                             1D list containing all histogram entry names of background processes len(file_list) (optional)
                              optional: in case you want create different empty bins
-        :param file_list_: list
-                           1D list containing all files that contribute to the histogramm.
-        :param kwargs: kwargs of fill_hist
+        :param file_list: list
+                           1D list containing all files that contribute to the histogram.
+        :param kwargs: kwargs of fill
         """
         
-        years_, runs_ = (["2012"], ["A-D"]) if info is None else (info[0], info[1])
+        years_, runs_ = self.info if info is None else (info[0], info[1])
         
-        file_list_ = file_list_ if file_list_ is not None else Hist._get_cutted_list_from_dir(dir_, years_, runs_)
+        file_list = file_list if file_list is not None else Hist._get_cutted_list_from_dir(directory, years_, runs_)
         
-        for item, data_, mc_sig_, mc_bac_ in zip(file_list_,
-                                                 self._get_name_list("data", file_list_, name_data_),
-                                                 self._get_name_list("mc_sig", file_list_, name_sig_mc_),
-                                                 self._get_name_list("mc_bac", file_list_, name_bac_mc_)):
+        with contextlib.suppress(KeyError):
+            if "channel" in kwargs and kwargs["channel"] is not None:
+                if isinstance(kwargs["channel"], str):
+                    _collect_channels = {it for it in alias["channels"].aliases_of(kwargs["channel"])}
+                    file_list = [file for file in file_list if any(it in file for it in list(_collect_channels))]
+                if isinstance(kwargs["channel"], list):
+                    _collect_channels = {it for channel in kwargs["channel"] for it in alias["channels"].aliases_of(channel)}
+                    file_list = [file for file in file_list if any(it in file for it in list(_collect_channels))]
+            kwargs.pop("channel")
+        
+        for item, data_, mc_sig_, mc_bac_ in zip(file_list,
+                                                 self._get_name_list("data", file_list, name_data),
+                                                 self._get_name_list("mc_sig", file_list, name_mc_sig),
+                                                 self._get_name_list("mc_bac", file_list, name_mc_bac)):
             df_ = pd.read_csv(item, sep=";")
             if not df_.empty:
-                col__ = [it for it in df_.columns if col_ in it or it in col_] if isinstance(col_, str) else col_
-                col__.append(filter_[0]) if filter_ is not None else None
-                array_to_fill = self.convert_column(df_[col__], filter_)
-                if "_Run" in item:
-                    self.fill_hist(name=data_, array_of_interest=array_to_fill, **kwargs)
-                if "MC_20" in item:
+                col__ = [it for it in df_.columns if column in it or it in column] if isinstance(column, str) else column
+                col__.append(filter_by[0]) if filter_by is not None else None
+                array_to_fill = self.convert_column(df_[col__], filter_by=filter_by, lepton_number=lepton_number)
+                if any(it in os.path.split(item)[1] for it in alias["data types"].aliases_of("run")):
+                    self.fill(name=data_, array_of_interest=array_to_fill, **kwargs)
+                if any(it in os.path.split(item)[1] for it in alias["data types"].aliases_of("mc")):
                     year = [y for y in years_ if y in item][0]
-                    if "_H_to_" in item:
-                        self.fill_hist(name=mc_sig_, array_of_interest=array_to_fill,
-                                       info=[year, runs_, "H_ZZ"], **kwargs)
-                    if "_H_to" not in item:
-                        self.fill_hist(name=mc_bac_, array_of_interest=array_to_fill,
-                                       info=[year, runs_,
-                                             f"ZZ_{'4mu' if '4mu' in item else ('4el' if '4el' in item else '2el2mu')}"],
-                                       **kwargs)
+                    if any(it in os.path.split(item)[1] for it in alias["data types"].aliases_of("mc_sig")):
+                        self.fill(name=mc_sig_, array_of_interest=array_to_fill,
+                                  info=[year, runs_, "H_ZZ"], **kwargs)
+                    if not any(it in os.path.split(item)[1] for it in alias["data types"].aliases_of("mc_sig")):
+                        self.fill(name=mc_bac_, array_of_interest=array_to_fill,
+                                  info=[year, runs_,
+                                        f"ZZ_{'4mu' if '4mu' in item else ('4el' if '4el' in item else '2el2mu')}"],
+                                  **kwargs)
     
     def draw(self, pass_name, **kwargs):
         """
@@ -238,6 +260,7 @@ class Hist(HistHelper):
             return np.append([0], np.append(array_, 0))
         
         fig, ax = (kwargs["figure"], kwargs["ax"]) if "figure" in kwargs else plt.subplots(1, 1, figsize=(10, 6))
+        
         with contextlib.suppress(KeyError):
             kwargs.pop("figure")
             kwargs.pop("ax")
@@ -247,35 +270,39 @@ class Hist(HistHelper):
             return fig, ax
         
         kwlist = [{key: val[i] for key, val in kwargs.items()} for i in range(max(map(len, kwargs.values())))]
+        idx = 0
         
-        if "data" in self.data.keys():
-            
+        if any(it in pass_name for it in alias["data types"].aliases_of("data")):
             if np.count_nonzero(self.data["data"]) > 0:
                 
                 kwargs_data_ = {"color": "black", "marker": "o", "fmt": "o"}
-                kwargs_data_.update(kwlist[0])
+                kwargs_data_.update(kwlist[idx])
                 
                 pass_x, pass_y = np.array([]), np.array([])
                 for i in range(len(self.x_range)):
                     if self.data["data"][i] != 0:
                         pass_x, pass_y = np.append(pass_x, self.x_range[i]), np.append(pass_y, self.data["data"][i])
                 ax.errorbar(pass_x, pass_y, xerr=0, yerr=self.calc_errors_poisson_near_cont(pass_y), **kwargs_data_)
+                idx += 1
         
-        if len(list(self.data.keys())) >= 2:
+        if any(it in pass_name for it in alias["data types"].aliases_of("mc_bac")):
             plt_xr = np.append([self.x_range[0] - self.bin_width], np.append(self.x_range, self.x_range[-1] + self.bin_width))
-            
-            ax.fill_between(plt_xr, append_zeros(self.data[pass_name[1]]), step="mid", linewidth=0.0, **kwlist[1])
-            if len(list(self.data.keys())) >= 3:
-                temp_pileup = 0
-                for i in range(2, len(pass_name)):
-                    temp_pileup += append_zeros(self.data[pass_name[i - 1]])
-                    ax.fill_between(plt_xr, append_zeros(self.data[pass_name[i]]) + temp_pileup, temp_pileup,
-                                    step="mid", linewidth=0.0, **kwlist[i])
+            ax.fill_between(plt_xr, append_zeros(self.data["mc_bac"]), step="mid", linewidth=0.0, **kwlist[idx])
+            idx += 1
+        
+        if any(it in pass_name for it in alias["data types"].aliases_of("mc_sig")):
+            temp_pileup = 0
+            plt_xr = np.append([self.x_range[0] - self.bin_width], np.append(self.x_range, self.x_range[-1] + self.bin_width))
+            if any(it in pass_name for it in alias["data types"].aliases_of("mc_bac")):
+                temp_pileup += append_zeros(self.data["mc_bac"])
+            ax.fill_between(plt_xr, append_zeros(self.data["mc_sig"]) + temp_pileup, temp_pileup,
+                            step="mid", linewidth=0.0, **kwlist[idx])
+        
         ax.legend()
         
         return fig, ax
     
-    def save_hist_plot(self, name):
+    def save(self, name):
         """
         Saves the created figure.
         

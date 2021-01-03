@@ -172,7 +172,7 @@ class PlotHiggs(PlotInitWidget):
             
             BCH.setting.button(object_=spinbox_text, x_=button.x() + button.width(), y_=button.y() + 5,
                                w_=50, h_=30, transparent_=True, text_="mu: ")
-
+            
             BCH.setting.geometry(object_=spinbox, x_=spinbox_text.x() + spinbox_text.width() + self.b_space - 30,
                                  y_=self.f_start_y + 30 * i + 5, w_=50, h_=20)
             
@@ -235,14 +235,14 @@ class PlotHiggs(PlotInitWidget):
         
         h = Hist(bins=self.num_buttons, hist_range=self.hist_range)
         h.set_empty_bin(["data", "mc_bac"])
-        h.fill_hist_from_dir(col_="mass_4l", dir_=self.mc_dir_, info=self.info)
+        h.fill_hist_from_dir(column="mass_4l", directory=self.mc_dir_, info=self.info)
         
         self.y_plot_limits = (0, math.ceil(np.amax(h.data["mc_bac"])))
         self.histograms["mc_bac"] = h
         
         h = Hist(bins=self.num_buttons, hist_range=self.hist_range)
         h.set_empty_bin(["data", "mc_bac", "mc_sig"])
-        h.fill_hist_from_dir(col_="mass_4l", dir_=self.mc_dir_, info=self.info)
+        h.fill_hist_from_dir(column="mass_4l", directory=self.mc_dir_, info=self.info)
         
         self.histograms["mc_bac_sig_125"] = h
         
@@ -250,7 +250,7 @@ class PlotHiggs(PlotInitWidget):
             file_list = TSH.mixed_file_list(TSH.get_other_mc_dir(num, dir_=self.mc_other_dir), main_dir_=self.mc_dir_)
             h = Hist(bins=self.num_buttons, hist_range=self.hist_range, signal_mass_mc=None if self.on_pseudo_data else num)
             h.set_empty_bin(["data", "mc_bac", "mc_sig"])
-            h.fill_hist_from_dir(col_="mass_4l", dir_=None, info=self.info, file_list_=file_list)
+            h.fill_hist_from_dir(column="mass_4l", directory=None, info=self.info, file_list=file_list)
             self.histograms[f"mc_bac_sig_{num}"] = h
     
     def _stat_eval_bac_sig(self, hist_object, num="", mu=""):
@@ -295,7 +295,7 @@ class PlotHiggs(PlotInitWidget):
                 
                 temp_hist.draw(pass_name=["data", "mc_bac", f"mc_sig"],
                                color=["black", "royalblue", color],
-                               label=[f"{self.td['measurement'][self.la]}", f"{self.td['background'][self.la]}:"+r" $ZZ, Z\gamma$",
+                               label=[f"{self.td['measurement'][self.la]}", f"{self.td['background'][self.la]}:" + r" $ZZ, Z\gamma$",
                                       f"$m_H = ${num} GeV"],
                                alpha=[1, 1, 0.5],
                                figure=self.figure, ax=ax)
@@ -305,7 +305,7 @@ class PlotHiggs(PlotInitWidget):
         else:
             self.histograms["mc_bac"].draw(pass_name=["data", "mc_bac"],
                                            color=["black", "royalblue"],
-                                           label=[f"{self.td['measurement'][self.la]}", f"{self.td['background'][self.la]}:"+r" $ZZ, Z\gamma$"],
+                                           label=[f"{self.td['measurement'][self.la]}", f"{self.td['background'][self.la]}:" + r" $ZZ, Z\gamma$"],
                                            figure=self.figure, ax=ax)
         
         if (self.lower_border_, self.upper_border_) != self.hist_range and self._visible_stat_eval:
@@ -352,7 +352,6 @@ class PlotHiggs(PlotInitWidget):
 
 
 def WidgetHiggs(*args, **kwargs):
-
     if not QtWidgets.QApplication.instance():
         app = QtWidgets.QApplication(sys.argv)
     else:

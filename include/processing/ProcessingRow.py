@@ -52,9 +52,9 @@ class ProcessingRow(object):
         except:
             return self.__to_str(np.array(variable.split(","))[accept])
     
-    def if_column(self):
+    def dataframe_head(self):
         """
-        Skipt a row if this is the head.
+        Skip a row if this is the head.
         :return: bool
         """
         return True if self.pairs[0][0] == self.pairs[0][1] else False
@@ -78,7 +78,7 @@ class ProcessingRow(object):
         :param search_variables: list
                                  1D list containing names with "str" type.
         :param type_variables: list
-                               !d list containing datatypes
+                               !d list containing data types
         :return: ndarray
                  search_variables x D array containing data with "ndarray" type.
         """
@@ -99,7 +99,7 @@ class ProcessingRow(object):
         if len(accept_array) == 2:
             mu_accept, el_accept = accept_array[0], accept_array[1]
             mu_names = [item for item in self.names if "muon" in item]
-            el_names = [item for item in self.names if "electron" in item or "misshits" in item]
+            el_names = [item for item in self.names if "electron" in item]
             if np.sum(mu_accept) != len(mu_accept):
                 self.row[mu_names] = self.row[mu_names].apply(lambda x: self.__to_str_from_str(x, mu_accept))
             if np.sum(el_accept) != len(el_accept):
@@ -138,7 +138,7 @@ class ProcessingRow(object):
         Evaluates and reduces on the basis of a boolean run in form of a list
         or a single value whether the "pandas series" should be discarded or only reduced.
 
-        :param to_accept_list: nrray
+        :param to_accept_list: ndarray
                                1D or 2D array containing data with "bool" type.
         :param to_accept_bool: bool
         """
