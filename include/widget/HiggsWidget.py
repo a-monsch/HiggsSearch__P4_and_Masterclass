@@ -293,19 +293,19 @@ class PlotHiggs(PlotInitWidget):
                     _mu = float(self.spinboxes[i].text().replace(",", "."))
                     temp_hist.data["mc_sig"] *= _mu
                 
-                temp_hist.draw(pass_name=["data", "mc_bac", f"mc_sig"],
-                               color=["black", "royalblue", color],
-                               label=[f"{self.td['measurement'][self.la]}", f"{self.td['background'][self.la]}:" + r" $ZZ, Z\gamma$",
+                temp_hist.draw(pass_name=["mc_bac", f"mc_sig"],
+                               color=["royalblue", color],
+                               label=[f"{self.td['background'][self.la]}:" + r" $ZZ, Z\gamma$",
                                       f"$m_H = ${num} GeV"],
-                               alpha=[1, 1, 0.5],
+                               alpha=[1, 0.5],
                                figure=self.figure, ax=ax)
                 _sig_bac_temp_str = self._stat_eval_bac_sig(temp_hist, num=num, mu=f"{_mu}")
                 _stat_eval_sig_bac_string += f"{_sig_bac_temp_str},  " if self._visible_stat_eval else ""
                 del temp_hist
         else:
-            self.histograms["mc_bac"].draw(pass_name=["data", "mc_bac"],
-                                           color=["black", "royalblue"],
-                                           label=[f"{self.td['measurement'][self.la]}", f"{self.td['background'][self.la]}:" + r" $ZZ, Z\gamma$"],
+            self.histograms["mc_bac"].draw(pass_name=["mc_bac"],
+                                           color=["royalblue"],
+                                           label=[f"{self.td['background'][self.la]}:" + r" $ZZ, Z\gamma$"],
                                            figure=self.figure, ax=ax)
         
         if (self.lower_border_, self.upper_border_) != self.hist_range and self._visible_stat_eval:
