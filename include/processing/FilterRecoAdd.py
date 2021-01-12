@@ -579,6 +579,8 @@ class AddVariable(ProcessingBasicAwk):
         if self.look_for != "both" and (self.look_for == "muon" or self.look_for == "electron"):
             awk_array[f"{self.look_for}_pt"] = _calc_func(awk_array[f"{self.look_for}_px"],
                                                           awk_array[f"{self.look_for}_py"])
+            
+            return awk_array
         
         if self.look_for == "both":
             
