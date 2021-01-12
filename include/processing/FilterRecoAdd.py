@@ -1,9 +1,12 @@
 # -*- coding: UTF-8 -*-
 
+import gc
+
+import awkward1 as awk
 import numpy as np
 
 from .CalcAndAllowerInit import FilterInit, CalcInit
-from .ProcessingRow import ProcessingRow
+from .ProcessingBasicAwk import ProcessingBasicAwk
 
 
 def array(*args, **kwargs):
@@ -14,16 +17,18 @@ def array(*args, **kwargs):
 _oldarray = np.array
 np.array = _oldarray
 
+npawk = lambda x: np.array(awk.to_list(x))
 
-class FilterStr(ProcessingRow):
+
+class FilterStr(ProcessingBasicAwk):
     """
     Class that provides certain filters for data reduction.
     """
     calc_instance = CalcInit
     filter_instance = FilterInit
     
-    def __init__(self, row, name_list, look_for):
-        super(FilterStr, self).__init__(row, name_list)
+    def __init__(self, look_for):
+        super().__init__()
         self.look_for = look_for
     
     @classmethod
@@ -39,7 +44,7 @@ class FilterStr(ProcessingRow):
             cls.filter_instance = kwargs["filter_instance"]
     
     # Filter No 1
-    def lepton_detector_classification(self):
+    def lepton_detector_classification(self, awk_array):
         """
         Filter checks the classification of the leptons.
         
@@ -52,34 +57,38 @@ class FilterStr(ProcessingRow):
 
         :return: pd.Series
         """
-        if self.dataframe_head():
-            return self.row
+        
+        _func = FilterStr.filter_instance.lepton_type
         
         if self.look_for != "both" and (self.look_for == "muon" or self.look_for == "electron"):
-            found_array = self.search_for(search_variables=["type"],
-                                          type_variables=[str])  # [lepton_type + "_type"], type_variables=[str])
-            type_array = found_array[0]
+            accept_array = _func(awk_array[f"{self.look_for}_type"], self.look_for)
             
-            accept_array = FilterStr.filter_instance.lepton_type(type_array, self.look_for)
+            awk_array = self.item_based_filter(awk_array, accept_array, self.look_for)
+            awk_array = self.minimum_item_count_filter(awk_array, self.look_for)
             
-            self.eval_and_reduce(to_accept_list=[accept_array])
-            return self.row
+            del accept_array
+            gc.collect()
+            
+            return awk_array
         
         if self.look_for == "both":
-            found_array = self.search_for(search_variables=["muon_type", "electron_type"], type_variables=[str, str])
-            type_mu, type_el = found_array[0], found_array[1]
             
-            accept_array_mu = FilterStr.filter_instance.lepton_type(type_mu, "muon")
-            accept_array_el = FilterStr.filter_instance.lepton_type(type_el, "electron")
+            accept_array_mu = _func(awk_array["muon_type"], "muon")
+            accept_array_el = _func(awk_array["electron_type"], "electron")
             
-            self.eval_and_reduce(to_accept_list=[accept_array_mu, accept_array_el])
-            return self.row
+            awk_array = self.item_based_filter(awk_array, [accept_array_mu, accept_array_el], self.look_for)
+            awk_array = self.minimum_item_count_filter(awk_array, self.look_for)
+            
+            del accept_array_el, accept_array_mu
+            gc.collect()
+            
+            return awk_array
         
         else:
             raise TypeError("'lepton_type' can only be: 'muon', 'electron' or 'both'")
     
     # Filter No 2
-    def electric_charge(self):
+    def electric_charge(self, awk_array):
         """
         Filter that checks whether an electrically neutral charge
         combination can be formed from the leptons contained in the event.
@@ -91,33 +100,38 @@ class FilterStr(ProcessingRow):
         
         :return: pd.Series
         """
-        if self.dataframe_head():
-            return self.row
+        
+        _func = FilterStr.filter_instance.combined_charge
         
         if self.look_for != "both" and (self.look_for == "muon" or self.look_for == "electron"):
-            found_array = self.search_for(search_variables=[self.look_for + "_charge"], type_variables=[int])
-            charge = found_array[0]
+            accept_charge = awk.from_iter([_func(it, combine_num=4) for it in awk_array[f"{self.look_for}_charge"]])
             
-            accept_charge = FilterStr.filter_instance.combined_charge(charge, 4)
-            self.eval_and_reduce(to_accept_bool=accept_charge)
-            return self.row
+            awk_array = self.event_based_filter(awk_array, filter_on=accept_charge)
+            
+            del accept_charge
+            gc.collect()
+            
+            return awk_array
         
         if self.look_for == "both":
-            found_array = self.search_for(search_variables=["muon_charge", "electron_charge"],
-                                          type_variables=[int, int])
-            charge_mu, charge_el = found_array[0], found_array[1]
             
-            accept_charge_mu = FilterStr.filter_instance.combined_charge(charge_mu, 2)
-            accept_charge_el = FilterStr.filter_instance.combined_charge(charge_el, 2)
+            accept_charge_mu = awk.from_iter([_func(it, combine_num=2) for it in awk_array["muon_charge"]])
+            accept_charge_el = awk.from_iter([_func(it, combine_num=2) for it in awk_array["electron_charge"]])
             
-            self.eval_and_reduce(to_accept_bool=(accept_charge_mu and accept_charge_el))
-            return self.row
+            accept_charge = awk.from_iter(list(np.array(accept_charge_el) & np.array(accept_charge_mu)))
+            
+            awk_array = self.event_based_filter(awk_array, filter_on=accept_charge)
+            
+            del accept_charge, accept_charge_mu, accept_charge_el
+            gc.collect()
+            
+            return awk_array
         
         else:
             raise TypeError("'lepton_type' can only be: 'muon', 'electron' or 'both'")
     
     # Filter No 3
-    def pt_min(self):
+    def pt_min(self, awk_array):
         """
         Filter out leptons whose transverse momentum is smaller than the minimum allowed by filter.
         Also adds transverse momentum.
@@ -133,41 +147,52 @@ class FilterStr(ProcessingRow):
                 
         :return: pd.Series
         """
-        if self.dataframe_head():
-            return self.row
+        
+        _calc_func = FilterStr.calc_instance.pt
+        _filter_func = FilterStr.filter_instance.pt_min
         
         if self.look_for != "both" and (self.look_for == "muon" or self.look_for == "electron"):
-            found_array = self.search_for(search_variables=["px", "py"], type_variables=[float, float])
-            px, py = found_array[0], found_array[1]
             
-            pt = FilterStr.calc_instance.pt(px, py)
-            self.add_raw_to_row(variable_name=f"{self.look_for}_pt", variable_array=pt)
-            accept_array = FilterStr.filter_instance.pt_min(pt, self.look_for)
+            if f"{self.look_for}_pt" not in awk_array.fields:
+                awk_array[f"{self.look_for}_pt"] = _calc_func(awk_array[f"{self.look_for}_px"],
+                                                              awk_array[f"{self.look_for}_py"])
             
-            self.eval_and_reduce(to_accept_list=[accept_array])
-            return self.row
+            accept_array = _filter_func(awk_array[f"{self.look_for}_pt"], self.look_for)
+            
+            awk_array = self.item_based_filter(awk_array, accept_array, self.look_for)
+            awk_array = self.minimum_item_count_filter(awk_array, self.look_for)
+            
+            del accept_array
+            gc.collect()
+            
+            return awk_array
         
         if self.look_for == "both":
-            found_array = self.search_for(search_variables=["muon_px", "muon_py", "electron_px", "electron_py"],
-                                          type_variables=[float, float, float, float])
-            px_mu, py_mu = found_array[0], found_array[1]
-            px_el, py_el = found_array[2], found_array[3]
             
-            pt_mu = FilterStr.calc_instance.pt(px_mu, py_mu)
-            pt_el = FilterStr.calc_instance.pt(px_el, py_el)
-            self.add_raw_to_row(variable_name="muon_pt", variable_array=pt_mu)
-            self.add_raw_to_row(variable_name="electron_pt", variable_array=pt_el)
-            accept_array_mu = FilterStr.filter_instance.pt_min(pt_mu, "muon")
-            accept_array_el = FilterStr.filter_instance.pt_min(pt_el, "electron")
+            if f"muon_pt" not in awk_array.fields:
+                awk_array[f"muon_pt"] = _calc_func(awk_array[f"muon_px"],
+                                                   awk_array[f"muon_py"])
             
-            self.eval_and_reduce(to_accept_list=[accept_array_mu, accept_array_el])
-            return self.row
+            if f"electron_pt" not in awk_array.fields:
+                awk_array[f"electron_pt"] = _calc_func(awk_array[f"electron_px"],
+                                                       awk_array[f"electron_py"])
+            
+            accept_array_mu = _filter_func(awk_array[f"muon_pt"], "muon")
+            accept_array_el = _filter_func(awk_array[f"electron_pt"], "electron")
+            
+            awk_array = self.item_based_filter(awk_array, [accept_array_mu, accept_array_el], self.look_for)
+            awk_array = self.minimum_item_count_filter(awk_array, look_for=self.look_for)
+            
+            del accept_array_el, accept_array_mu
+            gc.collect()
+            
+            return awk_array
         
         else:
             raise TypeError("'lepton_type' can only be: 'muon', 'electron' or 'both'")
     
     # Filter No 4
-    def pseudorapidity(self):
+    def pseudorapidity(self, awk_array):
         """
         Filter leptons based on the calculated pseudorapidity. Also adds the pseudorapidity.
         
@@ -182,45 +207,59 @@ class FilterStr(ProcessingRow):
         
         :return: pd.Series
         """
-        if self.dataframe_head():
-            return self.row
+        
+        _calc_func = FilterStr.calc_instance.pseudorapidity
+        _filter_func = FilterStr.filter_instance.pseudorapidity
         
         if self.look_for != "both" and (self.look_for == "muon" or self.look_for == "electron"):
-            found_array = self.search_for(search_variables=["px", "py", "pz", "energy"],
-                                          type_variables=[float, float, float, float])
-            px, py, pz, energy = found_array[0], found_array[1], found_array[2], found_array[3]
             
-            pseudorapidity = FilterStr.calc_instance.pseudorapidity(px, py, pz, energy=energy)
-            self.add_raw_to_row(variable_name=f"{self.look_for}_pseudorapidity", variable_array=pseudorapidity)
-            accept_array = FilterStr.filter_instance.pseudorapidity(pseudorapidity, self.look_for)
+            if f"{self.look_for}_pseudorapidity" not in awk_array.fields:
+                awk_array[f"{self.look_for}_pseudorapidity"] = _calc_func(awk_array[f"{self.look_for}_px"],
+                                                                          awk_array[f"{self.look_for}_py"],
+                                                                          awk_array[f"{self.look_for}_pz"],
+                                                                          energy=awk_array[f"{self.look_for}_energy"])
             
-            self.eval_and_reduce(to_accept_list=[accept_array])
-            return self.row
+            accept_array = _filter_func(awk_array[f"{self.look_for}_pseudorapidity"], self.look_for)
+            
+            awk_array = self.item_based_filter(awk_array, accept_array, self.look_for)
+            awk_array = self.minimum_item_count_filter(awk_array, self.look_for)
+            
+            del accept_array
+            gc.collect()
+            
+            return awk_array
         
         if self.look_for == "both":
-            found_array = self.search_for(search_variables=["muon_px", "muon_py", "muon_pz",
-                                                            "electron_px", "electron_py", "electron_pz",
-                                                            "muon_energy", "electron_energy"],
-                                          type_variables=[float, float, float, float, float, float, float, float])
-            px_mu, py_mu, pz_mu = found_array[0], found_array[1], found_array[2]
-            px_el, py_el, pz_el = found_array[3], found_array[4], found_array[5]
-            energy_mu, energy_el = found_array[6], found_array[7]
             
-            pseudorapidity_mu = FilterStr.calc_instance.pseudorapidity(px_mu, py_mu, pz_mu, energy=energy_mu)
-            pseudorapidity_el = FilterStr.calc_instance.pseudorapidity(px_el, py_el, pz_el, energy=energy_el)
-            self.add_raw_to_row(variable_name="muon_pseudorapidity", variable_array=pseudorapidity_mu)
-            self.add_raw_to_row(variable_name="electron_pseudorapidity", variable_array=pseudorapidity_el)
-            accept_array_mu = FilterStr.filter_instance.pseudorapidity(pseudorapidity_mu, "muon")
-            accept_array_el = FilterStr.filter_instance.pseudorapidity(pseudorapidity_el, "electron")
+            if "muon_pseudorapidity" not in awk_array.fields:
+                awk_array["muon_pseudorapidity"] = _calc_func(awk_array[f"muon_px"],
+                                                              awk_array[f"muon_py"],
+                                                              awk_array[f"muon_pz"],
+                                                              energy=awk_array[f"muon_energy"])
             
-            self.eval_and_reduce(to_accept_list=[accept_array_mu, accept_array_el])
-            return self.row
+            if "electron_pseudorapidity" not in awk_array.fields:
+                awk_array["electron_pseudorapidity"] = _calc_func(awk_array[f"electron_px"],
+                                                                  awk_array[f"electron_py"],
+                                                                  awk_array[f"electron_pz"],
+                                                                  energy=awk_array[f"electron_energy"])
+            
+            accept_array_mu = _filter_func(awk_array["muon_pseudorapidity"], "muon")
+            
+            accept_array_el = _filter_func(awk_array["electron_pseudorapidity"], "electron")
+            
+            awk_array = self.item_based_filter(awk_array, [accept_array_mu, accept_array_el], self.look_for)
+            awk_array = self.minimum_item_count_filter(awk_array, look_for=self.look_for)
+            
+            del accept_array_el, accept_array_mu
+            gc.collect()
+            
+            return awk_array
         
         else:
             raise TypeError("'lepton_type' can only be: 'muon', 'electron' or 'both'")
     
     # Filter No 5
-    def misshit(self):
+    def misshit(self, awk_array):
         """
         Filters out electrons from an event that have an insufficient number of missing hits (>1).
         
@@ -233,33 +272,37 @@ class FilterStr(ProcessingRow):
         
         :return: pd.Series
         """
-        if self.dataframe_head():
-            return self.row
+        
+        _func = FilterStr.filter_instance.misshits
         
         if self.look_for == "electron":
-            found_array = self.search_for(search_variables=["misshits"], type_variables=[int])
-            misshits = found_array[0]
+            accept_array = _func(awk_array["electron_misshits"])
             
-            accept_array = FilterStr.filter_instance.misshits(misshits)
+            awk_array = self.item_based_filter(awk_array, accept_array, self.look_for)
+            awk_array = self.minimum_item_count_filter(awk_array, self.look_for)
             
-            self.eval_and_reduce(to_accept_list=[accept_array])
-            return self.row
+            del accept_array
+            gc.collect()
+            
+            return awk_array
         
         if self.look_for == "both":
-            found_array = self.search_for(search_variables=["misshits"], type_variables=[int])
-            misshits = found_array[0]
             
-            accept_array_el = FilterStr.filter_instance.misshits(misshits)
-            accept_array_mu = np.ones(len(accept_array_el), dtype=bool)  # dummy for separation mu/el in reduce_row
+            accept_array = _func(awk_array["electron_misshits"])
             
-            self.eval_and_reduce(to_accept_list=[accept_array_mu, accept_array_el])
-            return self.row
+            awk_array = self.item_based_filter(awk_array, [True, accept_array], self.look_for)
+            awk_array = self.minimum_item_count_filter(awk_array, self.look_for)
+            
+            del accept_array
+            gc.collect()
+            
+            return awk_array
         
         else:
             raise TypeError("'lepton_type' can only be: 'muon', 'electron' or 'both'")
     
     # Filter No 6
-    def relative_isolation(self):
+    def relative_isolation(self, awk_array):
         """
         Filter leptons based on relative isolation.
         
@@ -272,34 +315,38 @@ class FilterStr(ProcessingRow):
         
         :return: pd.Series
         """
-        if self.dataframe_head():
-            return self.row
+        
+        _func = FilterStr.filter_instance.relative_isolation
         
         if self.look_for != "both" and (self.look_for == "muon" or self.look_for == "electron"):
-            found_array = self.search_for(search_variables=["relPFIso"], type_variables=[float])
-            rel_pf_iso = found_array[0]
+            accept_array = _func(awk_array[f"{self.look_for}_relPFIso"])
             
-            accept_array = FilterStr.filter_instance.relative_isolation(rel_pf_iso)
+            awk_array = self.item_based_filter(awk_array, accept_array, self.look_for)
+            awk_array = self.minimum_item_count_filter(awk_array, look_for=self.look_for)
             
-            self.eval_and_reduce(to_accept_list=[accept_array])
-            return self.row
+            del accept_array
+            gc.collect()
+            
+            return awk_array
         
         if self.look_for == "both":
-            found_array = self.search_for(search_variables=["muon_relPFIso", "electron_relPFIso"],
-                                          type_variables=[float, float])
-            rel_pf_iso_mu, rel_pf_iso_el = found_array[0], found_array[1]
             
-            accept_array_mu = FilterStr.filter_instance.relative_isolation(rel_pf_iso_mu)
-            accept_array_el = FilterStr.filter_instance.relative_isolation(rel_pf_iso_el)
+            accept_array_mu = _func(awk_array[f"muon_relPFIso"])
+            accept_array_el = _func(awk_array[f"electron_relPFIso"])
             
-            self.eval_and_reduce(to_accept_list=[accept_array_mu, accept_array_el])
-            return self.row
+            awk_array = self.item_based_filter(awk_array, [accept_array_mu, accept_array_el], self.look_for)
+            awk_array = self.minimum_item_count_filter(awk_array, look_for=self.look_for)
+            
+            del accept_array_el, accept_array_mu
+            gc.collect()
+            
+            return awk_array
         
         else:
             raise TypeError("'lepton_type' can only be: 'muon', 'electron' or 'both'")
     
     # Filter No 7
-    def impact_parameter(self):
+    def impact_parameter(self, awk_array):
         """
         Filter leptons based on the impact parameter.
         
@@ -312,36 +359,35 @@ class FilterStr(ProcessingRow):
         
         :return: pd.Series
         """
-        if self.dataframe_head():
-            return self.row
+        
+        _func = FilterStr.filter_instance.impact_parameter
         
         if self.look_for != "both" and (self.look_for == "muon" or self.look_for == "electron"):
-            found_array = self.search_for(search_variables=["SIP3d", "dxy", "dz"],
-                                          type_variables=[float, float, float])
-            sip3d, dxy, dz = found_array[0], found_array[1], found_array[2]
+            accept_array = _func(awk_array[f"{self.look_for}_SIP3d"], awk_array[f"{self.look_for}_dxy"],
+                                 awk_array[f"{self.look_for}_dz"])
             
-            accept_array = FilterStr.filter_instance.impact_parameter(sip3d, dxy, dz)
+            awk_array = self.item_based_filter(awk_array, accept_array, self.look_for)
+            awk_array = self.minimum_item_count_filter(awk_array, self.look_for)
             
-            self.eval_and_reduce(to_accept_list=[accept_array])
-            return self.row
+            del accept_array
+            gc.collect()
+            
+            return awk_array
         
         if self.look_for == "both":
-            found_array = self.search_for(search_variables=["muon_SIP3d", "muon_dxy", "muon_dz",
-                                                            "electron_SIP3d", "electron_dxy", "electron_dz"],
-                                          type_variables=[float, float, float, float, float, float])
-            sip3d_mu, dxy_mu, dz_mu = found_array[0], found_array[1], found_array[2]
-            sip3d_el, dxy_el, dz_el = found_array[3], found_array[4], found_array[5]
+            accept_array_mu = _func(awk_array["muon_SIP3d"], awk_array["muon_dxy"], awk_array["muon_dz"])
+            accept_array_el = _func(awk_array["electron_SIP3d"], awk_array["electron_dxy"], awk_array["electron_dz"])
             
-            accept_array_mu = FilterStr.filter_instance.impact_parameter(sip3d_mu, dxy_mu, dz_mu)
-            accept_array_el = FilterStr.filter_instance.impact_parameter(sip3d_el, dxy_el, dz_el)
+            awk_array = self.item_based_filter(awk_array, [accept_array_mu, accept_array_el], self.look_for)
+            awk_array = self.minimum_item_count_filter(awk_array, self.look_for)
             
-            self.eval_and_reduce(to_accept_list=[accept_array_mu, accept_array_el])
-            return self.row
-        
-        return None
+            del accept_array_el, accept_array_mu
+            gc.collect()
+            
+            return awk_array
     
     # Filter No 8
-    def pt_exact(self):
+    def pt_exact(self, awk_array):
         """
         Filter events based on the exact required transverse momentum of each lepton in an event.
         
@@ -355,39 +401,49 @@ class FilterStr(ProcessingRow):
         
         :return: pd.Series
         """
-        if self.dataframe_head():
-            return self.row
+        
+        _calc_func = FilterStr.calc_instance.pt
+        _filter_func = FilterStr.filter_instance.pt_exact
         
         if self.look_for != "both" and (self.look_for == "muon" or self.look_for == "electron"):
-            found_array = self.search_for(search_variables=["px", "py"], type_variables=[float, float])
-            px, py = found_array[0], found_array[1]
             
-            pt = FilterStr.calc_instance.pt(px, py)
-            self.add_raw_to_row(variable_name=f"{self.look_for}_pt", variable_array=pt)
-            accept_value = FilterStr.filter_instance.pt_exact(pt, lepton_type=self.look_for)
+            if f"{self.look_for}_pt" not in awk_array.fields:
+                awk_array[f"{self.look_for}_pt"] = _calc_func(awk_array[f"{self.look_for}_px"],
+                                                              awk_array[f"{self.look_for}_py"])
             
-            self.eval_and_reduce(to_accept_bool=accept_value)
-            return self.row
+            accept_value = awk.from_iter([_filter_func(pt, self.look_for) for pt in awk_array[f"{self.look_for}_pt"]])
+            
+            awk_array = self.event_based_filter(awk_array, accept_value)
+            
+            del accept_value
+            gc.collect()
+            
+            return awk_array
         
         if self.look_for == "both":
-            found_array = self.search_for(search_variables=["muon_px", "muon_py", "electron_px", "electron_py"],
-                                          type_variables=[float, float, float, float])
-            px_mu, py_mu, px_el, py_el = found_array[0], found_array[1], found_array[2], found_array[3]
+            if f"muon_pt" not in awk_array.fields:
+                awk_array[f"muon_pt"] = _calc_func(awk_array[f"muon_px"],
+                                                   awk_array[f"muon_py"])
             
-            pt_mu = FilterStr.calc_instance.pt(px_mu, px_mu)
-            pt_el = FilterStr.calc_instance.pt(px_el, py_el)
-            self.add_raw_to_row(variable_name="muon_pt", variable_array=pt_mu)
-            self.add_raw_to_row(variable_name="electron_pt", variable_array=pt_el)
-            accept_mu_and_el = FilterStr.filter_instance.pt_exact(p_t=(pt_mu, pt_el), lepton_type="both")
-            self.eval_and_reduce(to_accept_bool=accept_mu_and_el)
+            if f"electron_pt" not in awk_array.fields:
+                awk_array[f"electron_pt"] = _calc_func(awk_array[f"electron_px"],
+                                                       awk_array[f"electron_py"])
             
-            return self.row
+            accept_value = awk.from_iter([_filter_func(p_t=(npawk(pt_mu), npawk(pt_el)), lepton_type=self.look_for)
+                                          for pt_mu, pt_el in zip(awk_array["muon_pt"], awk_array["electron_pt"])])
+            
+            awk_array = self.event_based_filter(awk_array, accept_value)
+            
+            del accept_value
+            gc.collect()
+            
+            return awk_array
         
         else:
             raise TypeError("'lepton_type' can only be: 'muon', 'electron' or 'both'")
     
     # Filter No 9
-    def two_lepton_mass(self):
+    def two_lepton_mass(self, awk_array):
         """
         Quick Filter that checks if the minimum required two lepton invariant masses can be reconstructed.
         This filter do not make a complete reconstruction where all necessary variables and those further
@@ -402,51 +458,41 @@ class FilterStr(ProcessingRow):
         
         :return: pd.Series
         """
-        if self.dataframe_head():
-            return self.row
+        
+        _calc_func = FilterStr.calc_instance.possible_invariant_masses
+        _filter_func = FilterStr.filter_instance.invariant_mass
         
         if self.look_for != "both" and (self.look_for == "muon" or self.look_for == "electron"):
-            found_array = self.search_for(search_variables=["energy", "px", "py", "pz", "charge"],
-                                          type_variables=[float, float, float, float, float])
-            energy, charge = found_array[0], found_array[4]
-            px, py, pz = found_array[1], found_array[2], found_array[3]
+            inv_2l_m = _calc_func(awk_array=awk_array, lepton_type=self.look_for, number_of_leptons=2)
+            accept_value = [_filter_func(mass, number_of_leptons=2, lepton_type=self.look_for) for mass in inv_2l_m]
             
-            inv_m = FilterStr.calc_instance.possible_invariant_masses(px, py, pz, charge, energy=energy,
-                                                                      number_of_leptons=2)
-            accept_value = FilterStr.filter_instance.invariant_mass(inv_m, 2, lepton_type=self.look_for)
+            awk_array = self.event_based_filter(awk_array, accept_value)
             
-            self.eval_and_reduce(to_accept_bool=accept_value)
-            return self.row
+            del inv_2l_m, accept_value
+            gc.collect()
+            
+            return awk_array
         
         if self.look_for == "both":
-            found_array = self.search_for(search_variables=["muon_energy", "muon_charge",
-                                                            "muon_px", "muon_py", "muon_pz",
-                                                            "electron_energy", "electron_charge",
-                                                            "electron_px", "electron_py", "electron_pz"],
-                                          type_variables=[float, float, float, float, float,
-                                                          float, float, float, float, float])
-            energy_mu, charge_mu = found_array[0], found_array[1]
-            energy_el, charge_el = found_array[5], found_array[6]
-            px_mu, py_mu, pz_mu = found_array[2], found_array[3], found_array[4]
-            px_el, py_el, pz_el = found_array[7], found_array[8], found_array[9]
             
-            inv_m_mu = FilterStr.calc_instance.possible_invariant_masses(px_mu, py_mu, pz_mu, charge_mu,
-                                                                         energy=energy_mu,
-                                                                         number_of_leptons=2)
-            inv_m_el = FilterStr.calc_instance.possible_invariant_masses(px_el, py_el, pz_el, charge_el,
-                                                                         energy=energy_el,
-                                                                         number_of_leptons=2)
-            accept_value_mu = FilterStr.filter_instance.invariant_mass(inv_m_mu, 2, lepton_type=self.look_for)
-            accept_value_el = FilterStr.filter_instance.invariant_mass(inv_m_el, 2, lepton_type=self.look_for)
+            inv_2l_m_mu = _calc_func(awk_array=awk_array, lepton_type="muon", number_of_leptons=2)
+            inv_2l_m_el = _calc_func(awk_array=awk_array, lepton_type="electron", number_of_leptons=2)
             
-            self.eval_and_reduce(to_accept_bool=(accept_value_mu and accept_value_el))
-            return self.row
+            accept_value_mu = [_filter_func(mass[0], number_of_leptons=2, lepton_type=self.look_for) for mass in inv_2l_m_mu]
+            accept_value_el = [_filter_func(mass, number_of_leptons=2, lepton_type=self.look_for) for mass in inv_2l_m_el]
+            
+            awk_array = self.event_based_filter(awk_array, awk.from_iter(accept_value_el) | awk.from_iter(accept_value_mu))
+            
+            del inv_2l_m_mu, inv_2l_m_el, accept_value_mu, accept_value_el
+            gc.collect()
+            
+            return awk_array
         
         else:
             raise TypeError("'lepton_type' can only be: 'muon', 'electron' or 'both'")
     
     # Filter No 10
-    def four_lepton_mass(self):
+    def four_lepton_mass(self, awk_array):
         """
         Quick Filter that checks if the minimum required four lepton invariant masses can be reconstructed.
         This filter do not make a complete reconstruction where all necessary variables and those further
@@ -461,57 +507,46 @@ class FilterStr(ProcessingRow):
         
         :return: pd.Series
         """
-        if self.dataframe_head():
-            return self.row
+        
+        _calc_func = FilterStr.calc_instance.possible_invariant_masses
+        _filter_func = FilterStr.filter_instance.invariant_mass
         
         if self.look_for != "both" and (self.look_for == "muon" or self.look_for == "electron"):
-            found_array = self.search_for(search_variables=["energy", "px", "py", "pz", "charge"],
-                                          type_variables=[float, float, float, float, float])
+            inv_4l_m = _calc_func(awk_array=awk_array, lepton_type=self.look_for, number_of_leptons=4)
+            accept_value = [_filter_func(mass, number_of_leptons=4, lepton_type=self.look_for) for mass in inv_4l_m]
             
-            energy, charge = found_array[0], found_array[4]
-            px, py, pz = found_array[1], found_array[2], found_array[3]
+            awk_array = self.event_based_filter(awk_array, accept_value)
             
-            inv_m = FilterStr.calc_instance.possible_invariant_masses(px, py, pz, charge, energy=energy,
-                                                                      number_of_leptons=4)
-            accept_value = FilterStr.filter_instance.invariant_mass(inv_m, 4, lepton_type=self.look_for)
+            del inv_4l_m, accept_value
+            gc.collect()
             
-            self.eval_and_reduce(to_accept_bool=accept_value)
-            return self.row
+            return awk_array
         
         if self.look_for == "both":
-            found_array = self.search_for(search_variables=["muon_energy", "muon_px", "muon_py", "muon_pz",
-                                                            "electron_energy", "electron_px", "electron_py",
-                                                            "electron_pz", "muon_charge", "electron_charge"],
-                                          type_variables=[float, float, float, float, float,
-                                                          float, float, float, float, float])
             
-            energy_mu, energy_el = found_array[0], found_array[4]
-            charge_mu, charge_el = found_array[8], found_array[9]
-            px_mu, py_mu, pz_mu = found_array[1], found_array[2], found_array[3]
-            px_el, py_el, pz_el = found_array[5], found_array[6], found_array[7]
+            inv_4l_m = _calc_func(awk_array=awk_array, lepton_type=self.look_for, number_of_leptons=4)
+            accept_value = [_filter_func(mass, number_of_leptons=4, lepton_type=self.look_for) for mass in inv_4l_m]
             
-            inv_m = FilterStr.calc_instance.possible_invariant_masses([px_mu, px_el], [py_mu, py_el], [pz_mu, pz_el],
-                                                                      [charge_mu, charge_el],
-                                                                      energy=[energy_mu, energy_el],
-                                                                      number_of_leptons=4, look_for_both=True)
-            accept_value = FilterStr.filter_instance.invariant_mass(inv_m, 4, lepton_type=self.look_for)
+            awk_array = self.event_based_filter(awk_array, accept_value)
             
-            self.eval_and_reduce(to_accept_bool=accept_value)
-            return self.row
+            del inv_4l_m, accept_value
+            gc.collect()
+            
+            return awk_array
         
         else:
             raise TypeError("'lepton_type' can only be: 'muon', 'electron' or 'both'")
 
 
-class AddVariable(ProcessingRow):
+class AddVariable(ProcessingBasicAwk):
     """
     Class that adds certain variables to the data.
     """
     calc_instance = CalcInit
     filter_instance = FilterInit
     
-    def __init__(self, row, name_list, look_for):
-        super(AddVariable, self).__init__(row, name_list)
+    def __init__(self, look_for):
+        super().__init__()
         self.look_for = look_for
     
     @classmethod
@@ -526,7 +561,7 @@ class AddVariable(ProcessingRow):
         if any("filter" in it for it in kwargs.keys()):
             cls.filter_instance = kwargs["filter_instance"]
     
-    def pt(self):
+    def pt(self, awk_array):
         """
         Adds transverse momentum to the pandas series.
         
@@ -538,33 +573,27 @@ class AddVariable(ProcessingRow):
         
         :return: pd.Series
         """
-        if self.dataframe_head():
-            return self.row
+        
+        _calc_func = AddVariable.calc_instance.pt
         
         if self.look_for != "both" and (self.look_for == "muon" or self.look_for == "electron"):
-            found_array = self.search_for(search_variables=["px", "py"], type_variables=[float, float])
-            px, py = found_array[0], found_array[1]
-            
-            pt = AddVariable.calc_instance.pt(px, py)
-            self.add_raw_to_row(variable_name=f"{self.look_for}_pt", variable_array=pt)
-            return self.row
+            awk_array[f"{self.look_for}_pt"] = _calc_func(awk_array[f"{self.look_for}_px"],
+                                                          awk_array[f"{self.look_for}_py"])
         
         if self.look_for == "both":
-            found_array = self.search_for(search_variables=["muon_px", "muon_py", "electron_px", "electron_py"],
-                                          type_variables=[float, float, float, float])
-            px_mu, py_mu = found_array[0], found_array[1]
-            px_el, py_el = found_array[2], found_array[3]
             
-            pt_mu = AddVariable.calc_instance.pt(px_mu, py_mu)
-            pt_el = AddVariable.calc_instance.pt(px_el, py_el)
-            self.add_raw_to_row(variable_name="muon_pt", variable_array=pt_mu)
-            self.add_raw_to_row(variable_name="electron_pt", variable_array=pt_el)
-            return self.row
+            awk_array[f"muon_pt"] = _calc_func(awk_array[f"muon_px"],
+                                               awk_array[f"muon_py"])
+            
+            awk_array[f"electron_pt"] = _calc_func(awk_array[f"electron_px"],
+                                                   awk_array[f"electron_py"])
+            
+            return awk_array
         
         else:
             raise TypeError("'lepton_type' can only be: 'muon', 'electron' or 'both'")
     
-    def pseudorapidity(self):
+    def pseudorapidity(self, awk_array):
         """
         Adds pseudorapidity to the pandas series.
         
@@ -576,35 +605,35 @@ class AddVariable(ProcessingRow):
 
         :return: pd.Series
         """
-        if self.dataframe_head():
-            return self.row
+        
+        _calc_func = AddVariable.calc_instance.pseudorapidity
         
         if self.look_for != "both" and (self.look_for == "muon" or self.look_for == "electron"):
-            found_array = self.search_for(search_variables=["px", "py", "pz"],
-                                          type_variables=[float, float, float])
-            px, py, pz = found_array[0], found_array[1], found_array[2]
+            awk_array[f"{self.look_for}_pseudorapidity"] = _calc_func(awk_array[f"{self.look_for}_px"],
+                                                                      awk_array[f"{self.look_for}_py"],
+                                                                      awk_array[f"{self.look_for}_pz"],
+                                                                      energy=awk_array[f"{self.look_for}_energy"])
             
-            pseudorapidity = AddVariable.calc_instance.pseudorapidity(px, py, pz)
-            self.add_raw_to_row(variable_name=f"{self.look_for}_pseudorapidity", variable_array=pseudorapidity)
-            return self.row
+            return awk_array
         
         if self.look_for == "both":
-            found_array = self.search_for(search_variables=["muon_px", "muon_py", "muon_pz",
-                                                            "electron_px", "electron_py", "electron_pz"],
-                                          type_variables=[float, float, float, float, float, float])
-            px_mu, py_mu, pz_mu = found_array[0], found_array[1], found_array[2]
-            px_el, py_el, pz_el = found_array[3], found_array[4], found_array[5]
             
-            pseudorapidity_mu = AddVariable.calc_instance.pseudorapidity(px_mu, py_mu, pz_mu)
-            pseudorapidity_el = AddVariable.calc_instance.pseudorapidity(px_el, py_el, pz_el)
-            self.add_raw_to_row(variable_name="muon_pseudorapidity", variable_array=pseudorapidity_mu)
-            self.add_raw_to_row(variable_name="electron_pseudorapidity", variable_array=pseudorapidity_el)
-            return self.row
+            awk_array["muon_pseudorapidity"] = _calc_func(awk_array[f"muon_px"],
+                                                          awk_array[f"muon_py"],
+                                                          awk_array[f"muon_pz"],
+                                                          energy=awk_array[f"muon_energy"])
+            
+            awk_array["electron_pseudorapidity"] = _calc_func(awk_array[f"electron_px"],
+                                                              awk_array[f"electron_py"],
+                                                              awk_array[f"electron_pz"],
+                                                              energy=awk_array[f"electron_energy"])
+            
+            return awk_array
         
         else:
             raise TypeError("'lepton_type' can only be: 'muon', 'electron' or 'both'")
     
-    def phi(self):
+    def phi(self, awk_array):
         """
         Adds phi angle to the pandas series.
         
@@ -616,43 +645,38 @@ class AddVariable(ProcessingRow):
         
         :return: pd.Series
         """
-        if self.dataframe_head():
-            return self.row
+        
+        _calc_func = AddVariable.calc_instance.phi
         
         if self.look_for != "both" and (self.look_for == "muon" or self.look_for == "electron"):
-            found_array = self.search_for(search_variables=["px", "py"],
-                                          type_variables=[float, float])
-            px, py = found_array[0], found_array[1]
+            awk_array[f"{self.look_for}_phi"] = _calc_func(awk_array[f"{self.look_for}_px"],
+                                                           awk_array[f"{self.look_for}_py"])
             
-            phi = AddVariable.calc_instance.phi(px, py)
-            self.add_raw_to_row(variable_name=f"{self.look_for}_phi", variable_array=phi)
-            return self.row
+            return awk_array
         
         if self.look_for == "both":
-            found_array = self.search_for(search_variables=["muon_px", "muon_py", "electron_px", "electron_py"],
-                                          type_variables=[float, float, float, float])
-            px_mu, py_mu = found_array[0], found_array[1]
-            px_el, py_el = found_array[2], found_array[3]
             
-            phi_mu = AddVariable.calc_instance.phi(px_mu, py_mu)
-            phi_el = AddVariable.calc_instance.phi(px_el, py_el)
-            self.add_raw_to_row(variable_name="muon_phi", variable_array=phi_mu)
-            self.add_raw_to_row(variable_name="electron_phi", variable_array=phi_el)
-            return self.row
+            awk_array[f"muon_phi"] = _calc_func(awk_array[f"muon_px"],
+                                                awk_array[f"muon_py"])
+            
+            awk_array[f"electron_phi"] = _calc_func(awk_array[f"electron_px"],
+                                                    awk_array[f"electron_py"])
+            
+            return awk_array
         
         else:
             raise TypeError("'lepton_type' can only be: 'muon', 'electron' or 'both'")
 
 
-class Reconstruct(ProcessingRow):
+class Reconstruct(ProcessingBasicAwk):
     """
     Class that provides the reconstruction methods.
     """
     calc_instance = CalcInit
     filter_instance = FilterInit
     
-    def __init__(self, row, name_list, look_for):
-        super(Reconstruct, self).__init__(row, name_list)
+    def __init__(self, look_for):
+        super().__init__()
         self.look_for = look_for
     
     @classmethod
@@ -667,7 +691,7 @@ class Reconstruct(ProcessingRow):
         if any("filter" in it for it in kwargs.keys()):
             cls.filter_instance = kwargs["filter_instance"]
     
-    def zz(self):
+    def zz(self, awk_array):
         """
         Reconstructs a Z boson pair and adds it and all the necessary quantities to the pandas series.
         
@@ -686,76 +710,66 @@ class Reconstruct(ProcessingRow):
         
         :return: pd.Series
         """
-        if self.dataframe_head():
-            return self.row
+        
+        _calc_func_pseudorapidity = Reconstruct.calc_instance.pseudorapidity
+        _calc_func_pt = Reconstruct.calc_instance.pt
+        _calc_func_phi = Reconstruct.calc_instance.phi
+        _reconstruct_zz = Reconstruct.calc_instance.zz_and_index
         
         if self.look_for != "both" and (self.look_for == "muon" or self.look_for == "electron"):
             
-            found_array = self.search_for(search_variables=["pseudorapidity", "px", "py", "pz", "energy",
-                                                            "pt", "charge"],
-                                          type_variables=[float, float, float, float, float, float, float])
-            pseudorapidity, px, py, pz, energy = found_array[0], found_array[1], found_array[2], found_array[3], found_array[4]
-            pt, charge = found_array[5], found_array[6]
+            if f"{self.look_for}_pt" not in awk_array.fields:
+                awk_array[f"{self.look_for}_pt"] = _calc_func_pt(awk_array[f"{self.look_for}_px"],
+                                                                 awk_array[f"{self.look_for}_py"])
             
-            phi = Reconstruct.calc_instance.phi(px, py)
-            z1, z2, index_z1, index_z2 = Reconstruct.calc_instance.zz_and_index(pseudorapidity, phi, pt, px, py, pz, charge,
-                                                                                energy=energy,
-                                                                                look_for=self.look_for)
+            if f"{self.look_for}_pseudorapidity" not in awk_array.fields:
+                awk_array[f"{self.look_for}_pseudorapidity"] = _calc_func_pseudorapidity(awk_array[f"{self.look_for}_px"],
+                                                                                         awk_array[f"{self.look_for}_py"],
+                                                                                         awk_array[f"{self.look_for}_pz"],
+                                                                                         energy=awk_array[f"{self.look_for}_energy"])
             
-            if z1 == 0:
-                self.row["run"] = np.nan
-                return self.row
+            if f"{self.look_for}_phi" not in awk_array.fields:
+                awk_array[f"{self.look_for}_phi"] = [_calc_func_phi(px, py) for px, py in zip(awk_array[f"{self.look_for}_px"],
+                                                                                              awk_array[f"{self.look_for}_py"])]
             
-            self.add_raw_to_row(variable_name=f"{self.look_for}_phi", variable_array=phi)
-            self.add_raw_to_row(variable_name="z1_mass", variable_array=z1)
-            self.add_raw_to_row(variable_name="z2_mass", variable_array=z2)
-            self.add_raw_to_row(variable_name="z1_index", variable_array=index_z1)
-            self.add_raw_to_row(variable_name="z2_index", variable_array=index_z2)
+            awk_array = Reconstruct.calc_instance.zz_and_index(awk_array=awk_array, lepton_type=self.look_for)
             
-            return self.row
+            return awk_array
         
         if self.look_for == "both":
-            found_array = self.search_for(search_variables=["muon_pseudorapidity", "muon_px", "muon_py", "muon_pz",
-                                                            "muon_energy", "muon_pt", "muon_charge",
-                                                            "electron_pseudorapidity", "electron_px", "electron_py", "electron_pz",
-                                                            "electron_energy", "electron_pt", "electron_charge"],
-                                          type_variables=[float, float, float, float, float, float, float,
-                                                          float, float, float, float, float, float, float])
-            pseudorapidity_mu, px_mu, py_mu, pz_mu = found_array[0], found_array[1], found_array[2], found_array[3]
-            energy_mu, pt_mu, charge_mu = found_array[4], found_array[5], found_array[6]
-            pseudorapidity_el, px_el, py_el, pz_el = found_array[7], found_array[8], found_array[9], found_array[10]
-            energy_el, pt_el, charge_el = found_array[11], found_array[12], found_array[13]
             
-            phi_mu = Reconstruct.calc_instance.phi(px_mu, py_mu)
-            phi_el = Reconstruct.calc_instance.phi(px_el, py_el)
-            z1, z2, index_z1, index_z2, z1_tag, z2_tag = Reconstruct.calc_instance.zz_and_index([pseudorapidity_mu, pseudorapidity_el],
-                                                                                                [phi_mu, phi_el],
-                                                                                                [pt_mu, pt_el],
-                                                                                                [px_mu, px_el],
-                                                                                                [py_mu, py_el],
-                                                                                                [pz_mu, pz_el],
-                                                                                                [charge_mu, charge_el],
-                                                                                                look_for=self.look_for)
+            if f"muon_pt" not in awk_array.fields:
+                awk_array[f"muon_pt"] = _calc_func_pt(awk_array[f"muon_px"],
+                                                      awk_array[f"muon_py"])
             
-            if z1 == 0.0:
-                self.row["run"] = np.nan
-                return self.row
+            if f"muon_pseudorapidity" not in awk_array.fields:
+                awk_array[f"muon_pseudorapidity"] = _calc_func_pseudorapidity(awk_array[f"muon_px"], awk_array[f"muon_py"],
+                                                                              awk_array[f"muon_pz"], energy=awk_array[f"muon_energy"])
             
-            self.add_raw_to_row(variable_name="muon_phi", variable_array=phi_mu)
-            self.add_raw_to_row(variable_name="electron_phi", variable_array=phi_el)
-            self.add_raw_to_row(variable_name="z1_mass", variable_array=z1)
-            self.add_raw_to_row(variable_name="z2_mass", variable_array=z2)
-            self.add_raw_to_row(variable_name="z1_index", variable_array=index_z1)
-            self.add_raw_to_row(variable_name="z2_index", variable_array=index_z2)
-            self.add_raw_to_row(variable_name="z1_tag", variable_array=z1_tag)
-            self.add_raw_to_row(variable_name="z2_tag", variable_array=z2_tag)
+            if f"muon_phi" not in awk_array.fields:
+                awk_array[f"muon_phi"] = [_calc_func_phi(px, py) for px, py in zip(awk_array[f"muon_px"],
+                                                                                   awk_array[f"muon_py"])]
             
-            return self.row
+            if f"electron_pt" not in awk_array.fields:
+                awk_array[f"electron_pt"] = _calc_func_pt(awk_array[f"electron_px"],
+                                                          awk_array[f"electron_py"])
+            
+            if f"electron_pseudorapidity" not in awk_array.fields:
+                awk_array[f"electron_pseudorapidity"] = _calc_func_pseudorapidity(awk_array[f"electron_px"], awk_array[f"electron_py"],
+                                                                                  awk_array[f"electron_pz"], energy=awk_array[f"electron_energy"])
+            
+            if f"electron_phi" not in awk_array.fields:
+                awk_array[f"electron_phi"] = [_calc_func_phi(px, py) for px, py in zip(awk_array[f"electron_px"],
+                                                                                       awk_array[f"electron_py"])]
+            
+            awk_array = _reconstruct_zz(awk_array, lepton_type=self.look_for)
+            
+            return awk_array
         
         else:
             raise TypeError("'lepton_type' can only be: 'muon', 'electron' or 'both'")
     
-    def four_lepton_mass_from_zz(self):
+    def four_lepton_mass_from_zz(self, awk_array):
         """
         Reconstructs the four lepton invariant masses from the already reconstructed Z boson pair.
         
@@ -769,48 +783,17 @@ class Reconstruct(ProcessingRow):
         
         :return: pd.Series
         """
-        if self.dataframe_head():
-            return self.row
+        
+        _calc_mass = self.calc_instance.mass_4l_out_zz
         
         if self.look_for != "both" and (self.look_for == "muon" or self.look_for == "electron"):
-            found_array = self.search_for(search_variables=["px", "py", "pz", "z1_index", "z2_index", "energy"],
-                                          type_variables=[float, float, float, int, int, float])
-            px, py, pz = found_array[0], found_array[1], found_array[2]
-            z1_index, z2_index = found_array[3], found_array[4]
-            energy = found_array[5]
-            
-            mass_hi = self.calc_instance.mass_4l_out_zz(px, pz, py, [z1_index, z2_index], look_for=self.look_for, energy=energy)
-            
-            self.add_raw_to_row(variable_name="mass_4l", variable_array=mass_hi)
-            
-            if mass_hi == 0.0:
-                self.row["run"] = np.nan
-            
-            return self.row
+            awk_array = _calc_mass(awk_array, self.look_for)
+            return awk_array
         
         if self.look_for == "both":
-            found_array = self.search_for(search_variables=["muon_px", "muon_py", "muon_pz",
-                                                            "z1_index", "z2_index", "z1_tag", "z2_tag",
-                                                            "electron_px", "electron_py", "electron_pz",
-                                                            "muon_energy", "electron_energy"],
-                                          type_variables=[float, float, float, int, int, str, str, float, float, float, float, float])
             
-            px_mu, py_mu, pz_mu = found_array[0], found_array[1], found_array[2]
-            z1_index, z2_index, z1_tag, z2_tag = found_array[3], found_array[4], found_array[5], found_array[6]
-            px_el, py_el, pz_el = found_array[7], found_array[8], found_array[9]
-            energy_mu, energy_el = found_array[10], found_array[11]
-            
-            mass_hi = self.calc_instance.mass_4l_out_zz([px_mu, px_el], [py_mu, py_el], [pz_mu, pz_el],
-                                                        [z1_index, z2_index],
-                                                        energy=[energy_mu, energy_el],
-                                                        tag=[str(z1_tag[0]), str(z2_tag[0])], look_for=self.look_for)
-            
-            self.add_raw_to_row(variable_name="mass_4l", variable_array=mass_hi)
-            
-            if mass_hi == 0.0:
-                self.row["run"] = np.nan
-            
-            return self.row
+            awk_array = _calc_mass(awk_array, self.look_for)
+            return awk_array
         
         else:
             raise TypeError("'lepton_type' can only be: 'muon', 'electron' or 'both'")
