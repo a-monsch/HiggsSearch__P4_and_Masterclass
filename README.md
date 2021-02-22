@@ -1,3 +1,5 @@
+##### Attention: This branch is undergoing development and will have features that are buggy or not working at all. For a working version --> master branch.
+
 # HiggsSearch Masterclass (pupils and/or students)
 
 ## Brief overview
