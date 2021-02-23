@@ -35,7 +35,7 @@ time that Python is used, it is recommended to have a look at the notebook conta
 Python basics too.
 
 * To run the repo remotely:   
-  [![Binder](https://mybinder.org/badge_logo.svg)](https://mybinder.org/v2/gh/a-monsch/HiggsSearch__P4_and_Masterclass/master)
+  [![Binder](https://mybinder.org/badge_logo.svg)](https://mybinder.org/v2/gh/a-monsch/HiggsSearch__P4_and_Masterclass/dev-more-open-approach)
 
 * To run locally (following commands for Terminal/Power Shell):
 

@@ -2,7 +2,7 @@
 
 cd data
 
-wget --max-redirect=20 -O for_analysis_download.zip https://www.dropbox.com/sh/3j648sojeimjmfh/AACeBAPUZkvsr0gHXULloRSWa?dl=0
+wget --max-redirect=20 -O for_analysis_download.zip https://www.dropbox.com/sh/nys8b6p1o2uwdqw/AAAvWVGzSOdRueEaH1VFd7pua?dl=0
 
 unzip -o for_analysis_download.zip
 rm for_analysis_download.zip

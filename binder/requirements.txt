@@ -6,9 +6,11 @@ scipy==1.5.0
 numpy==1.19.0
 pandas==1.0.5
 matplotlib==3.2.2
-iminuit==1.4.2
-pyqt5==5.15.0
-kafe2==2.0b2
+iminuit==1.4.9
+kafe2==2.2.1
 tqdm==4.46.1
 jupyter_contrib_nbextensions==0.5.1
 ipywidgets==7.5.1
+awkward
+uproot3==3.14.2
+uproot3-methods==0.10.0
