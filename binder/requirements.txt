@@ -11,6 +11,6 @@ kafe2==2.2.1
 tqdm==4.46.1
 jupyter_contrib_nbextensions==0.5.1
 ipywidgets==7.5.1
-awkward
+awkward0==0.15.3
 uproot3==3.14.2
 uproot3-methods==0.10.0
