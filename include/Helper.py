@@ -19,8 +19,8 @@ def pipeline(df: pd.DataFrame,  # Current DataFrame on witch the pipeline is bui
     
     _iteritems = df.iterrows()  # Iterate over DataFrame rows as (index, Series) pairs.
     
-    _buffered_iteritems = buffered_pipeline()  # initializing a buffered iterator...
-    iterator = _buffered_iteritems(_iteritems, buffer_size)  # ...wrapping existing iterator
+    _buffered_iteritems = buffered_pipeline()  # initializing a buffered version...
+    buffered_iter = _buffered_iteritems(_iteritems, buffer_size)  # ...wrapping existing version
     
     def _gen_like_func(_func, _iteritems):  # passing trough the pipeline
         for i, item in _iteritems:
@@ -28,9 +28,9 @@ def pipeline(df: pd.DataFrame,  # Current DataFrame on witch the pipeline is bui
     
     # building pipeline: ...d(c(b(a(x)))), with a, b, c, d... buffered pipeline steps
     for func, buffer in zip(func_list, buffer_size if isinstance(buffer_size, list) else itt.repeat(buffer_size)):
-        iterator = _buffered_iteritems(_gen_like_func(func, iterator), buffer)
+        buffered_iter = _buffered_iteritems(_gen_like_func(func, buffered_iter), buffer)
     
-    return iterator
+    return buffered_iter
 
 
 def load_dataset(file: str,  # path to dataset
