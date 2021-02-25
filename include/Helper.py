@@ -15,19 +15,20 @@ tqdm.pandas()
 
 def pipeline(df: pd.DataFrame,  # Current DataFrame on witch the pipeline is build
              func_list: List[Callable[[pd.Series], pd.Series]],  # (filter) functions for the pipeline
-             buffer_size: Union[int, List[int]] = 1):  # buffersize of all steps: [int] or specific steps List[int]
+             buffer_size: Union[int, List[int]] = 2):  # buffersize of all steps: [int] or specific steps List[int] with 1 + len(func_list)
+    
+    buffer_size = buffer_size if isinstance(buffer_size, list) else [buffer_size for _ in func_list]  # adjust int
     
     _iteritems = df.iterrows()  # Iterate over DataFrame rows as (index, Series) pairs.
-    
     _buffered_iteritems = buffered_pipeline()  # initializing a buffered version...
-    buffered_iter = _buffered_iteritems(_iteritems, buffer_size)  # ...wrapping existing version
+    buffered_iter = _buffered_iteritems(_iteritems, buffer_size[0])  # ...wrapping existing version
     
     def _gen_like_func(_func, _iteritems):  # passing trough the pipeline
         for i, item in _iteritems:
             yield (i, _func(item))
     
     # building pipeline: ...d(c(b(a(x)))), with a, b, c, d... buffered pipeline steps
-    for func, buffer in zip(func_list, buffer_size if isinstance(buffer_size, list) else itt.repeat(buffer_size)):
+    for func, buffer in zip(func_list, buffer_size):
         buffered_iter = _buffered_iteritems(_gen_like_func(func, buffered_iter), buffer)
     
     return buffered_iter
