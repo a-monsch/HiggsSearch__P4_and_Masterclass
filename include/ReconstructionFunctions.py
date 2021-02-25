@@ -37,12 +37,12 @@ def reconstruct_zz(row: pd.Series, pt_dict: dict = None):
     _valid_flavour_comp = lambda ch, _d: len(np.unique([_v["f"] for _v in _d.values()])) == 2 if ch == "2e2mu" else True
     
     try:
-        while len(_combinations.keys()) >= 2 and _valid_flavour_comp(row[1], _combinations):  # here
+        while len(_combinations.keys()) >= 2 and _valid_flavour_comp(row[1], _combinations):
             _tmp_combinations = _combinations.copy()
             _z1_idx = min(_tmp_combinations, key=lambda x: abs(_tmp_combinations[x]["z"].mass - z_mass))  # nearest to z_mass
             for k, v in list(_tmp_combinations.items()):  # removing combinations with same leptons or flavour (*)
                 try:
-                    if row[1] == "2e2mu":  # here
+                    if row[1] == "2e2mu":
                         _tmp_combinations.pop(k) if _tmp_combinations[_z1_idx]["f"] == v["f"] else None  # keep only other "combination" flavour
                     else:
                         _tmp_combinations.pop(k) if any(i == j for i in _z1_idx for j in k) else None  # remove combination with _z1_idx leptons
@@ -50,14 +50,14 @@ def reconstruct_zz(row: pd.Series, pt_dict: dict = None):
                     pass
             try:
                 _z2_idx = max(_tmp_combinations, key=lambda x: _tmp_combinations[x]["z"].mass)  # maximal remaining
-            except ValueError:  # occurs frm (*) {(1, 2), (2, 3)} -> {}
+            except ValueError:  # occurs from (*) {(1, 2), (2, 3)} -> {}
                 break
             z1, z2 = _combinations[_z1_idx]["z"], _combinations[_z2_idx]["z"]
             z1, z2 = (z1, z2) if z1.mass > z2.mass else (z2, z1)
             _pt = np.concatenate([np.array([_combinations[k]["lep"][i].pt for i in range(2)]) for k in [_z1_idx, _z2_idx]])
             if _valid_z_pair_pt(_pt) and _valid_z_pair_masses(z1, z2):
-                row[3] = z1  # here
-                row[4] = z2  # here
+                row[3] = z1
+                row[4] = z2
                 return row
             else:
                 _combinations.pop(_z1_idx)  # retry without this one
