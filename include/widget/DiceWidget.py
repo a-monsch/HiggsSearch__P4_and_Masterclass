@@ -13,7 +13,7 @@ from include.Helper import legend_without_duplicate_labels
 
 class DiceWidget(object):
     
-    def __init__(self, language="EN", gui_dict="./include/widget/lang/gui.yml", bins=6):
+    def __init__(self, language="EN", gui_dict="../include/widget/lang/gui.yml", bins=6):
         self.gui_dict = gui_dict
         self.la = language  # language
         self.td = self._load_language_dict()
