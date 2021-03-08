@@ -262,7 +262,7 @@ class _HiggsPdfWidget(_CoreWidget):
                 
                 _chi2 = eval(f"lambda {_arg_dict_str}: np.sum((_data - func(_x, {_arg_dict_keys_str})) ** 2)")
                 
-                _f = im.Minuit(_chi2, **_arg_dict, errordef=1)
+                _f = im.Minuit(_chi2, **_arg_dict)
                 return partial(func, **{k: _f.values[k] for k in _f.parameters})
             
             _BackgroundFunc.poly_grade_0 = change_default_kwargs(_BackgroundFunc.poly_grade_0)
