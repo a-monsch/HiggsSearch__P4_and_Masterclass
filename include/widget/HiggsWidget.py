@@ -542,7 +542,7 @@ class _HiggsHistogramWidget(_CoreWidget):
         
         # ----
         
-        legend_without_duplicate_labels(ax)
+        legend_without_duplicate_labels(ax, fontsize=16)
         
         y_plot_limits = (0, float(max(np.amax(self.histograms["mc_bac"].data["mc_bac"]) + 1,
                                       _m_hist[np.argmax(_m_hist)] + np.sqrt(_m_hist[np.argmax(_m_hist)]) + 1,
@@ -551,8 +551,8 @@ class _HiggsHistogramWidget(_CoreWidget):
         ax.set_ylim(*y_plot_limits)
         ax.set_xlim(*self.hist_range)
         
-        ax.set_xlabel(r"$m_{4\ell}$ in GeV")
-        ax.set_ylabel(self.td["entries"][self.la])
+        ax.set_xlabel(r"$m_{4\ell}$ in GeV", fontsize=16)
+        ax.set_ylabel(self.td["entries"][self.la], fontsize=16)
         
         fig.canvas.draw()
     

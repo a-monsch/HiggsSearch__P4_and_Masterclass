@@ -91,7 +91,7 @@ def mc_hist_scale_factor(channel: str,  # "4mu", "4e", "2e2mu"
     return (_cross_section[_key] * _k[_key] * sum(_luminosity.values())) / _N_mc[_key]
 
 
-def legend_without_duplicate_labels(ax):
+def legend_without_duplicate_labels(ax, fontsize=None):
     handles, labels = ax.get_legend_handles_labels()
     unique = [(h, l) for i, (h, l) in enumerate(zip(handles, labels)) if l not in labels[:i]]
-    ax.legend(*zip(*unique))
+    ax.legend(*zip(*unique), fontsize=fontsize)

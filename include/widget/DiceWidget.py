@@ -295,12 +295,12 @@ class DiceWidget(object):
         
         ax.set_xlim(0.5, 0.5 + self.bins)
         ax.set_xticks(np.arange(1, self.bins + 1, 1))
-        ax.set_ylabel(self.td["entries"][self.la])
-        ax.set_xlabel("n")
+        ax.set_ylabel(self.td["entries"][self.la], fontsize=16)
+        ax.set_xlabel("n", fontsize=16)
         
         self.ui_comp["text_show_measurement"].value = self._ui_helper__build_table()
         
-        legend_without_duplicate_labels(ax)
+        legend_without_duplicate_labels(ax, fontsize=16)
         
         fig.canvas.draw()
     
