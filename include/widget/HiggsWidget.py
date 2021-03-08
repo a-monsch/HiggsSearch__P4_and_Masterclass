@@ -67,11 +67,18 @@ class _StatEvalFallback(object):
     
     @staticmethod
     def pdf(pdf_func, integration_range, measurement, signal_strength):
-        exp_v = lambda a: quad(lambda x: x * pdf_func(a, x), a=integration_range[0], b=integration_range[1])[0]
-        _nll_mu = 2 * exp_v(signal_strength) - 2 * np.sum(exp_v(signal_strength) * pdf_func(signal_strength, measurement))
-        _nll_0 = 2 * exp_v(0) - 2 * np.sum(exp_v(0) * pdf_func(0, measurement))
+        measurement = np.array(measurement, dtype=np.longdouble)
+        measurement = measurement[(measurement < integration_range[1]) & (measurement > integration_range[0])]
         
-        _value = round(np.real(np.sqrt(np.array(- _nll_mu + _nll_0, dtype=np.complexfloating))), 3)
+        @np.vectorize
+        @lru_cache(None)
+        def exp_val(a):
+            return quad(lambda x: x * pdf_func(np.array(a, dtype=np.longdouble), x), a=integration_range[0], b=integration_range[1])[0]
+        
+        _nll_mu = 2 * exp_val(signal_strength) - 2 * np.sum(np.log(exp_val(signal_strength) * pdf_func(signal_strength, measurement)))
+        _nll_0 = 2 * exp_val(0) - 2 * np.sum(np.log(exp_val(0) * pdf_func(0, measurement)))
+        
+        _value = round(np.real(np.sqrt(np.array(-_nll_mu + _nll_0, dtype=np.complexfloating))), 3)
         return f"$Z = {_value} \, \\sigma$"
 
 
@@ -183,7 +190,7 @@ class _HiggsPdfWidget(_CoreWidget):
         self.ui_comp.update(self._get_ui_components())
         
         self.fit_hist = None
-        self._get_hist_to_fit_and_set_background_defaults()
+        self._get_hist_to_fit_and_set_background_defaults(do_fit=False)
     
     def _get_ui_components(self):
         _d = {}
@@ -208,8 +215,8 @@ class _HiggsPdfWidget(_CoreWidget):
                                                   intend=False)
         
         # less laggy variant
-        _d["signal_strenght_slider"] = ipw.BoundedFloatText(description=f"$\mu = $", value=0.0, min=0.0, max=2.0, step=0.1)
-        _d["signal_width_slider"] = ipw.BoundedFloatText(description=r"$\sigma = $", value=2, min=1.8, max=2.5, step=0.1)
+        _d["signal_strenght_slider"] = ipw.BoundedFloatText(description=f"$\mu = $", value=0.0, min=0.0, max=3.0, step=0.1)
+        _d["signal_width_slider"] = ipw.BoundedFloatText(description=r"$\sigma = $", value=2.5, min=1.9, max=2.9, step=0.1)
         _d["signal_mu_slider"] = ipw.BoundedFloatText(description=r"$\bar{m} = $", value=125, step=0.1, min=self.range[0], max=self.range[1])
         
         # more laggy variant
@@ -294,23 +301,31 @@ class _HiggsPdfWidget(_CoreWidget):
         
         # ----
         
-        sigma = float(kwargs["signal_width_slider"])
-        mean = float(kwargs["signal_mu_slider"])
-        a = float(kwargs["signal_strenght_slider"])
+        sigma = np.array(float(kwargs["signal_width_slider"]), dtype=np.longdouble)
+        mean = np.array(float(kwargs["signal_mu_slider"]), dtype=np.longdouble)
+        a = np.array(float(kwargs["signal_strenght_slider"]), dtype=np.longdouble)
         
         # ----
         
+        @np.vectorize
         @lru_cache(None)
         def norm_s(s, m):
             return (quad(lambda x: s_pdf(x, sigma=s, mu=m), a=self.range[0], b=self.range[1])[0]) ** (-1)
         
+        @np.vectorize
+        @lru_cache(None)
+        def norm_b():
+            return (quad(lambda x: b_pdf(x), a=self.range[0], b=self.range[1])[0]) ** (-1)
+        
+        @np.vectorize
         @lru_cache(None)
         def norm_pdf(a):
             return (quad(lambda x: pdf(a, x), a=self.range[0], b=self.range[1])[0]) ** (-1)
         
+        @np.vectorize
         @lru_cache(None)
         def pdf(a, x):
-            return a * self.N_s * norm_s(s=sigma, m=mean) * s_pdf(x, sigma=sigma, mu=mean) + self.N_b * b_pdf(x)
+            return a * self.N_s * norm_s(s=sigma, m=mean) * s_pdf(x, sigma=sigma, mu=mean) + self.N_b * norm_b() * b_pdf(x)
         
         @np.vectorize
         @lru_cache(None)
