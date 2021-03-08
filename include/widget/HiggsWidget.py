@@ -262,7 +262,7 @@ class _HiggsPdfWidget(_CoreWidget):
                 
                 _chi2 = eval(f"lambda {_arg_dict_str}: np.sum((_data - func(_x, {_arg_dict_keys_str})) ** 2)")
                 
-                _f = im.Minuit(_chi2, **_arg_dict)
+                _f = im.Minuit(_chi2, **_arg_dict, errordef=1)
                 return partial(func, **{k: _f.values[k] for k in _f.parameters})
             
             _BackgroundFunc.poly_grade_0 = change_default_kwargs(_BackgroundFunc.poly_grade_0)
@@ -300,20 +300,20 @@ class _HiggsPdfWidget(_CoreWidget):
         
         # ----
         
-        @lru_cache
+        @lru_cache(None)
         def norm_s(s, m):
             return (quad(lambda x: s_pdf(x, sigma=s, mu=m), a=self.range[0], b=self.range[1])[0]) ** (-1)
         
-        @lru_cache
+        @lru_cache(None)
         def norm_pdf(a):
             return (quad(lambda x: pdf(a, x), a=self.range[0], b=self.range[1])[0]) ** (-1)
         
-        @lru_cache
+        @lru_cache(None)
         def pdf(a, x):
             return a * self.N_s * norm_s(s=sigma, m=mean) * s_pdf(x, sigma=sigma, mu=mean) + self.N_b * b_pdf(x)
         
         @np.vectorize
-        @lru_cache
+        @lru_cache(None)
         def normed_pdf(a, x):
             return norm_pdf(a) * pdf(a, x)
         
