@@ -120,6 +120,11 @@ class Hist(object):
         
         self.width = abs(self.be[0] - self.be[1])
         self.bc = self.be[1:] - self.width / 2
+        
+        # synonyms
+        self.bin_width = self.width
+        self.x_range = self.bc
+        self.bin_edges = self.be
     
     def set_bins(self, bin_content, label):
         if len(bin_content) == self.bins:

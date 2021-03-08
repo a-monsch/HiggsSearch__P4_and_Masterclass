@@ -508,7 +508,7 @@ class _HiggsHistogramWidget(_CoreWidget):
                     _y_lim_max = np.amax(_th.data["mc_sig"])
                 if kwargs["stat_eval_checkbox"]:
                     _sig_bac_temp_str = self._hist_eval_func_converter(_th, num=num, mu=f"{_mu}")
-                    _stat_eval_sig_bac_string += f"{_sig_bac_temp_str},  " if kwargs["stat_eval_chekbox"] else ""
+                    _stat_eval_sig_bac_string += f"{_sig_bac_temp_str},  " if kwargs["stat_eval_checkbox"] else ""
                 del _th
             
             else:
