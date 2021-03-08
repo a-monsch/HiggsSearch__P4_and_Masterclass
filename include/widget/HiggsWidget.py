@@ -107,7 +107,7 @@ class _SignalFunc(object):
 class _CoreWidget(object):
     measurement = np.array([])
     
-    def __init__(self, language="EN", gui_dict="../include/widget/lang/gui.yml", mc_dir="./data/for_widgets"):
+    def __init__(self, language="EN", gui_dict="../include/widget/lang/gui.yml", mc_dir="../data/for_widgets"):
         self.mc_dir = mc_dir
         self.gui_dict = gui_dict
         self.la = language  # language
