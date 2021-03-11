@@ -173,7 +173,7 @@ class _CoreWidget(object):
         self.ui_comp["measurement_show"].value = ", ".join([str(round(it, 3)) for it in np.sort(_CoreWidget.measurement)])
     
     def load_custom_language_dict(self):
-        with open(self.gui_dict, 'r') as outfile:
+        with open(self.gui_dict, 'r', encoding="utf-8") as outfile:
             my_dict = yaml.full_load(outfile)
         return my_dict
     
@@ -183,8 +183,9 @@ class _CoreWidget(object):
 
 class _HiggsPdfWidget(_CoreWidget):
     
-    def __init__(self, range=(105, 151), pdf_eval_func=None, **kwargs):
+    def __init__(self, range=(105, 151), pdf_eval_func=None, style="simple", **kwargs):
         super().__init__(**kwargs)
+        self.style = style
         self.pdf_eval_func = pdf_eval_func if pdf_eval_func else _StatEvalFallback.pdf
         self.range = range
         self.ui_comp.update(self._get_ui_components())
@@ -379,12 +380,13 @@ class _HiggsPdfWidget(_CoreWidget):
 
 class _HiggsHistogramWidget(_CoreWidget):
     
-    def __init__(self, bins=37, hist_range=(70, 181), hist_eval_func=None, **kwargs):
+    def __init__(self, bins=37, hist_range=(70, 181), hist_eval_func=None, style="simple", **kwargs):
         super().__init__(**kwargs)
         
         self.hist_eval_func = hist_eval_func if hist_eval_func else _StatEvalFallback.histogram
         self.hist_range = hist_range
         self.bins = bins
+        self.style = style
         
         self.histograms = self._get_mc_histograms()
         self.ui_comp.update(self._get_ui_components())
@@ -410,15 +412,19 @@ class _HiggsHistogramWidget(_CoreWidget):
         _d = {}
         
         _d["mc_checkbox"] = {r"$m_{\mathrm{H}}$" + f" = {num} GeV": ipw.Checkbox(False, description=r"$m_{\mathrm{H}}$" + f" = {num} GeV",
-                                                                                 layout=ipw.Layout(width="125px", height="30px"),
-                                                                                 indent=False) for num in self.mc_sigs_mass}
+                                                                                 layout=ipw.Layout(width="125px" if self.style == "all" else "300px",
+                                                                                                   height="30px"),
+                                                                                 indent=self.style != "all") for num in self.mc_sigs_mass}
         
         ipw.BoundedFloatText = partial(ipw.BoundedFloatText, disabled=False, description="",
                                        layout=ipw.Layout(width="175px", height="30px"))
         
-        _d["mc_mu_float_text"] = {f"$\phantom{{{num}}}\mu = $": ipw.BoundedFloatText(description=f"$\phantom{{{num}}}\mu = $",
-                                                                                     value=1.0, min=0.0, max=1000.0, step=0.05,
-                                                                                     indent=False) for num in self.mc_sigs_mass}
+        _d["text_simulated_data"] = ipw.HTML(value=f'{self.td["simulated higgs data of mass"][self.la]}:')
+        
+        if self.style == "all":
+            _d["mc_mu_float_text"] = {f"$\phantom{{{num}}}\mu = $": ipw.BoundedFloatText(description=f"$\phantom{{{num}}}\mu = $",
+                                                                                         value=1.0, min=0.0, max=1000.0, step=0.05,
+                                                                                         indent=False) for num in self.mc_sigs_mass}
         _d["bins_text"] = ipw.Text(description="Bins", value=str(int(self.bins)),
                                    layout=ipw.Layout(width="175px", height="30px"),
                                    intend=False, continuous_update=False)
@@ -435,15 +441,21 @@ class _HiggsHistogramWidget(_CoreWidget):
     def build_ui(self):
         
         _box1 = VBox([self.ui_comp["bins_text"], self.ui_comp["hist_range_text"], self.ui_comp["stat_eval_checkbox"]])
-        _box2 = HBox([VBox([v for v in self.ui_comp["mc_checkbox"].values()]),
-                      VBox([v for v in self.ui_comp["mc_mu_float_text"].values()], intend=False)], position="left")
+        
+        if self.style == "all":
+            _box2 = VBox([self.ui_comp["text_simulated_data"],
+                          HBox([VBox([v for v in self.ui_comp["mc_checkbox"].values()]),
+                                VBox([v for v in self.ui_comp["mc_mu_float_text"].values()], intend=False)], position="left")])
+        if self.style == "simple":
+            _box2 = VBox([self.ui_comp["text_simulated_data"],
+                          VBox([v for v in self.ui_comp["mc_checkbox"].values()], position="center")], position="center")
         
         _ui1 = VBox([_box1, _box2])
         
         _out = ipw.interactive_output(self.plot, _flatten_dict(self.ui_comp))
         
-        _out.layout.width = "75%"
-        _ui1.layout.width = "25%"
+        _out.layout.width = "75%" if self.style == "all" else "80%"
+        _ui1.layout.width = "25%" if self.style == "all" else "20%"
         
         return VBox([HBox([_out, _ui1]), self.measurement_ui])
     
@@ -493,7 +505,10 @@ class _HiggsHistogramWidget(_CoreWidget):
         for i, (num, color) in enumerate(zip(self.mc_sigs_mass, colors)):
             if kwargs[r"mc_checkbox_$m_{\mathrm{H}}$" + f" = {num} GeV"]:
                 _th = deepcopy(self.histograms[f"mc_sig_{num}"])
-                _mu = float(kwargs[f"mc_mu_float_text_$\phantom{{{num}}}\mu = $"])
+                try:
+                    _mu = float(kwargs[f"mc_mu_float_text_$\phantom{{{num}}}\mu = $"])
+                except KeyError:
+                    _mu = 1.0
                 _th.data["mc_sig"] *= _mu
                 _th.draw(label_list=["mc_bac", "mc_sig"],
                          figure=fig, ax=ax,
@@ -538,11 +553,11 @@ class _HiggsHistogramWidget(_CoreWidget):
         
         label_name = self.td["measurement"][self.la] if np.sum(len(_m_hist)) > 0.0 else None
         ax.errorbar(pass_x, pass_y, xerr=0, yerr=_AsymPoissonErr(pass_y).error, fmt="o", marker="o",
-                    color="black", label=label_name)
+                    color="black", label=label_name, linewidth=3, markersize=7)
         
         # ----
         
-        legend_without_duplicate_labels(ax, fontsize=16)
+        legend_without_duplicate_labels(ax, fontsize=22)
         
         y_plot_limits = (0, float(max(np.amax(self.histograms["mc_bac"].data["mc_bac"]) + 1,
                                       _m_hist[np.argmax(_m_hist)] + np.sqrt(_m_hist[np.argmax(_m_hist)]) + 1,
@@ -551,8 +566,11 @@ class _HiggsHistogramWidget(_CoreWidget):
         ax.set_ylim(*y_plot_limits)
         ax.set_xlim(*self.hist_range)
         
-        ax.set_xlabel(r"$m_{4\ell}$ in GeV", fontsize=16)
-        ax.set_ylabel(self.td["entries"][self.la], fontsize=16)
+        plt.setp(ax.get_xticklabels(), fontsize=22)
+        plt.setp(ax.get_yticklabels(), fontsize=22)
+        
+        ax.set_xlabel(r"$m_{4\ell}$ in GeV", fontsize=22)
+        ax.set_ylabel(self.td["entries"][self.la], fontsize=22)
         
         fig.canvas.draw()
     
@@ -563,10 +581,12 @@ class _HiggsHistogramWidget(_CoreWidget):
 
 class HiggsWidget(_CoreWidget):
     
-    def __init__(self, language="EN", display="all", **kwargs):
+    def __init__(self, language="EN", display="histogram", style="simple", **kwargs):
         super().__init__(language=language, **kwargs)
-        self.hhw = _HiggsHistogramWidget(language=language, **kwargs)
-        self.hpw = _HiggsPdfWidget(language=language, **kwargs)
+        if display == "all " or display == "histogram":
+            self.hhw = _HiggsHistogramWidget(language=language, style=style, **kwargs)
+        if display == "all" or display == "pdf":
+            self.hpw = _HiggsPdfWidget(language=language, style=style, **kwargs)
         self.display = display
     
     def observe_tab(self, x):

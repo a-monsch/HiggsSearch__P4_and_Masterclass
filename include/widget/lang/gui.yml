@@ -8,8 +8,8 @@ background:
   DE: Untergrund
   EN: Background
 entries:
-  DE: Bineintraege
-  EN: Bin entries
+  DE: Ereignisse
+  EN: Events
 file:
   DE: Datei
   EN: File
@@ -151,5 +151,19 @@ probability:
 probability density function:
   DE: Wahrscheinlichkeitsdichtefunktion
   EN: Probability density function
-
+simulated higgs data of mass:
+  DE: Simulierte Daten von einem Higgs Boson der Masse
+  EN: Simulated data of a higgs boson with a mass
+average rate:
+  DE: Mittlere Häufigkeit
+  EN: Mean
+mean std:
+  DE: Mittlere Standardabweichung
+  EN: Mean standard deviation
+individual std:
+  DE: Einzelne Standardabweichung
+  EN: Individual statdard deviation
+rolled dice number:
+  DE: Augenzahl
+  EN: Rolled number
 

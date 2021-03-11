@@ -35,7 +35,7 @@ class DiceWidget(object):
         self.ui = None
     
     def _load_language_dict(self):
-        with open(self.gui_dict, 'r') as outfile:
+        with open(self.gui_dict, 'r', encoding="utf-8") as outfile:
             my_dict = yaml.full_load(outfile)
         return my_dict
     
@@ -63,17 +63,17 @@ class DiceWidget(object):
                                           layout=ipw.Layout(width="200px", height="30px"),
                                           style={"description_width": "0px"})
         
-        _d["checkbox_mean"] = ipw.Checkbox(False, description=f"{self.td['mean'][self.la]}",
+        _d["checkbox_mean"] = ipw.Checkbox(False, description=f"{self.td['average rate'][self.la]}",
                                            layout=ipw.Layout(width="250px", height="30px"),
                                            indent=False, style={"description_width": "300px"})
         
         _d["checkbox_std_all"] = ipw.Checkbox(False,
-                                              description=f"{self.td['standard deviation'][self.la]} ({self.td['all'][self.la]})",
+                                              description=f"{self.td['mean std'][self.la]}",
                                               layout=ipw.Layout(width="250px", height="30px"),
                                               indent=False, style={"description_width": "300px"})
         
         _d["checkbox_std_indv"] = ipw.Checkbox(False,
-                                               description=f"{self.td['standard deviation'][self.la]} ({self.td['individual'][self.la]})",
+                                               description=f"{self.td['individual std'][self.la]}",
                                                layout=ipw.Layout(width="300px", height="30px"),
                                                indent=False, style={"description_width": "300px"})
         
@@ -252,7 +252,7 @@ class DiceWidget(object):
             plot_y_array = size_ * self.own_norm_func(plot_y_array)
         
         if kwargs["checkbox_mean"]:
-            ax.hlines(self.own_mean_func(plot_y_array), -1, self.bins + 2, ls="--", label=f"{self.td['mean'][self.la]}")
+            ax.hlines(self.own_mean_func(plot_y_array), -1, self.bins + 2, ls="--", label=f"{self.td['average rate'][self.la]}")
         
         if kwargs["checkbox_std_all"]:
             m_ = self.own_mean_func(plot_y_array)
@@ -264,7 +264,7 @@ class DiceWidget(object):
             std_ *= size_
             
             ax.fill_between([-1, self.bins + 2], [m_ + std_, m_ + std_], [m_ - std_, m_ - std_],
-                            color="green", alpha=0.25, label=f"{self.td['standard deviation'][self.la]} ({self.td['all'][self.la]})")
+                            color="green", alpha=0.25, label=f"{self.td['mean std'][self.la]}")
         
         if kwargs["checkbox_std_indv"]:
             y_err_ = self.own_std_indv_func(np.histogram(self.simulation, self.bins, density=False, range=(0.5, self.bins + 0.5))[0])
@@ -274,9 +274,8 @@ class DiceWidget(object):
                 y_err_ *= (1. / np.sum(np.histogram(self.simulation, self.bins, density=False, range=(0.5, self.bins + 0.5))[0]))
             y_err_ *= size_
             
-            ax.errorbar(np.arange(1, self.bins + 1, 1), plot_y_array, yerr=y_err_, fmt="bx", marker="",
-                        ecolor="royalblue", alpha=1.0, capsize=int((0.125 / 2. * 1000) / self.bins),
-                        label=f"{self.td['standard deviation'][self.la]} ({self.td['individual'][self.la]})")
+            ax.bar(np.arange(1, self.bins + 1, 1), 2 * y_err_, bottom=plot_y_array - y_err_, width=(0.1), color="royalblue",
+                   label=f"{self.td['individual std'][self.la]}")
         
         if kwargs["checkbox_stat_eval"]:
             _name, _value = self.own_statistical_evaluation_func(plot_ym_array, plot_y_array)
@@ -290,17 +289,20 @@ class DiceWidget(object):
         if np.sum(plot_ym_array) > 0.0:
             ax.errorbar(np.arange(1, self.bins + 1, 1), plot_ym_array, xerr=0,
                         yerr=self.own_std_indv_func(plot_ym_array),
-                        fmt="ko", lw=2, label=f"{self.td['measurement'][self.la]}")
+                        fmt="ko", label=f"{self.td['measurement'][self.la]}", linewidth=4, markersize=8)
             ax.legend()
         
         ax.set_xlim(0.5, 0.5 + self.bins)
         ax.set_xticks(np.arange(1, self.bins + 1, 1))
-        ax.set_ylabel(self.td["entries"][self.la], fontsize=16)
-        ax.set_xlabel("n", fontsize=16)
+        ax.set_ylabel(self.td["entries"][self.la], fontsize=22)
+        ax.set_xlabel(self.td["rolled dice number"][self.la], fontsize=22)
         
         self.ui_comp["text_show_measurement"].value = self._ui_helper__build_table()
         
-        legend_without_duplicate_labels(ax, fontsize=16)
+        legend_without_duplicate_labels(ax, fontsize=22)
+        
+        plt.setp(ax.get_xticklabels(), fontsize=22)
+        plt.setp(ax.get_yticklabels(), fontsize=22)
         
         fig.canvas.draw()
     
