@@ -154,7 +154,9 @@ class _CoreWidget(object):
         if kwargs["measurement_options"] == self.td["add measurement"][self.la]:
             if kwargs["add_measurement_text"] != "":
                 self.ui_comp["add_measurement_text"].value = ""
-                _CoreWidget.measurement = np.append(_CoreWidget.measurement, round(float(kwargs["add_measurement_text"]), 3))
+                _m = np.array(kwargs["add_measurement_text"].split(","), dtype=float)
+                for item in _m:
+                    _CoreWidget.measurement = np.append(_CoreWidget.measurement, round(item, 3))
         
         if kwargs["measurement_options"] == self.td["reset measurement"][self.la]:
             self.ui_comp["measurement_options"].value = self.td["add measurement"][self.la]
@@ -186,7 +188,7 @@ class _HiggsPdfWidget(_CoreWidget):
     def __init__(self, range=(105, 151), pdf_eval_func=None, style="simple", **kwargs):
         super().__init__(**kwargs)
         self.style = style
-        self.pdf_eval_func = pdf_eval_func if pdf_eval_func else _StatEvalFallback.pdf
+        self.pdf_eval_func = pdf_eval_func if pdf_eval_func else lambda *args, **kwagrs: "Not implemented yet!"  # _StatEvalFallback.pdf
         self.range = range
         self.ui_comp.update(self._get_ui_components())
         
@@ -383,7 +385,7 @@ class _HiggsHistogramWidget(_CoreWidget):
     def __init__(self, bins=37, hist_range=(70, 181), hist_eval_func=None, style="simple", **kwargs):
         super().__init__(**kwargs)
         
-        self.hist_eval_func = hist_eval_func if hist_eval_func else _StatEvalFallback.histogram
+        self.hist_eval_func = hist_eval_func if hist_eval_func else lambda *args, **kwagrs: "Not implemented yet!"  # _StatEvalFallback.histogram
         self.hist_range = hist_range
         self.bins = bins
         self.style = style
@@ -476,13 +478,15 @@ class _HiggsHistogramWidget(_CoreWidget):
         # ----
         
         mu = f"{mu}" if mu != "" and float(mu) != 1.0 else ""
+        try:
+            name_, val_ = self.hist_eval_func(measurement=_measurement,
+                                              background_simulation=_background_simulation, signal_simulation=_signal_simulation,
+                                              background_name="b", signal_name=f"{mu}s_{{{num} \\ \\mathrm{{GeV}}}}")
         
-        name_, val_ = self.hist_eval_func(measurement=_measurement,
-                                          background_simulation=_background_simulation, signal_simulation=_signal_simulation,
-                                          background_name="b", signal_name=f"{mu}s_{{{num} \\ \\mathrm{{GeV}}}}")
+            return f"{name_} = {round(val_, 3)}"
+        except ValueError:
+            return self.hist_eval_func()
         
-        return f"{name_} = {round(val_, 3)}"
-    
     def plot(self, **kwargs):
         
         _stat_eval_sig_bac_string = ""
@@ -582,12 +586,12 @@ class _HiggsHistogramWidget(_CoreWidget):
 
 class HiggsWidget(_CoreWidget):
     
-    def __init__(self, language="EN", display="histogram", style="simple", **kwargs):
+    def __init__(self, language="EN", display="histogram", style="simple", hist_eval_func=None, pdf_eval_func=None, **kwargs):
         super().__init__(language=language, **kwargs)
         if display == "all " or display == "histogram":
-            self.hhw = _HiggsHistogramWidget(language=language, style=style, **kwargs)
+            self.hhw = _HiggsHistogramWidget(language=language, style=style, hist_eval_func=hist_eval_func, **kwargs)
         if display == "all" or display == "pdf":
-            self.hpw = _HiggsPdfWidget(language=language, style=style, **kwargs)
+            self.hpw = _HiggsPdfWidget(language=language, style=style, pdf_eval_func=pdf_eval_func, **kwargs)
         self.display = display
     
     def observe_tab(self, x):
