@@ -251,8 +251,8 @@ class DiceWidget(object):
         if kwargs["checkbox_norm"] or kwargs["checkbox_scale_on_measurement"]:
             plot_y_array = size_ * self.own_norm_func(plot_y_array)
         
-        if kwargs["checkbox_mean"]:
-            ax.hlines(self.own_mean_func(plot_y_array), -1, self.bins + 2, ls="--", label=f"{self.td['average rate'][self.la]}")
+        if kwargs["checkbox_mean"]: # 0.5, 0.5 + self.bins
+            ax.hlines(self.own_mean_func(plot_y_array), 0.5, self.bins + 0.5, ls="--", label=f"{self.td['average rate'][self.la]}")
         
         if kwargs["checkbox_std_all"]:
             m_ = self.own_mean_func(plot_y_array)
@@ -287,15 +287,23 @@ class DiceWidget(object):
             ax.legend()
         
         if np.sum(plot_ym_array) > 0.0:
-            ax.errorbar(np.arange(1, self.bins + 1, 1), plot_ym_array, xerr=0,
-                        yerr=self.own_std_indv_func(plot_ym_array),
-                        fmt="ko", label=f"{self.td['measurement'][self.la]}", linewidth=4, markersize=8)
+            try:
+                ax.errorbar(np.arange(1, self.bins + 1, 1), plot_ym_array, xerr=0,
+                            yerr=self.own_std_indv_func(plot_ym_array),
+                            fmt="ko", label=f"{self.td['measurement'][self.la]}", linewidth=4, markersize=10)
+            except TypeError:
+                ax.scatter(np.arange(1, self.bins + 1, 1), plot_ym_array, color="black",
+                            marker="o", label=f"{self.td['measurement'][self.la]}", linewidth=4, s=10)
+                
             ax.legend()
         
         ax.set_xlim(0.5, 0.5 + self.bins)
         ax.set_xticks(np.arange(1, self.bins + 1, 1))
-        ax.set_ylabel(self.td["entries"][self.la], fontsize=22)
+        ax.set_ylabel(self.td["probability"][self.la] if kwargs["checkbox_norm"] else self.td["entries"][self.la], fontsize=22)
         ax.set_xlabel(self.td["rolled dice number"][self.la], fontsize=22)
+        
+        #ax.set_ylim(0, ax.get_ylim()[1] * 1.2)
+        ax.set_ylim(0, 30)
         
         self.ui_comp["text_show_measurement"].value = self._ui_helper__build_table()
         
@@ -305,6 +313,8 @@ class DiceWidget(object):
         plt.setp(ax.get_yticklabels(), fontsize=22)
         
         fig.canvas.draw()
+        
+        # fig.savefig("_dice_widget.svg", quality=100, bbox_inches='tight', dpi=200, transparent=True)
     
     @property
     def run(self):

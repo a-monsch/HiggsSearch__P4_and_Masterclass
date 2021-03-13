@@ -513,7 +513,7 @@ class _HiggsHistogramWidget(_CoreWidget):
                 _th.draw(label_list=["mc_bac", "mc_sig"],
                          figure=fig, ax=ax,
                          matplotlib_dicts={"mc_bac": {"color": "royalblue",
-                                                      "label": f"{self.td['background'][self.la]}:" + r" $ZZ, Z\gamma$",
+                                                      "label": f"{self.td['background'][self.la]}",  # :" + r" $Z, Z\gamma$",
                                                       "alpha": 1},
                                            "mc_sig": {"color": color,
                                                       "label": f"$m_H = ${num} GeV",
@@ -529,7 +529,7 @@ class _HiggsHistogramWidget(_CoreWidget):
             else:
                 self.histograms["mc_bac"].draw(label_list=["mc_bac"],
                                                figure=fig, ax=ax,
-                                               matplotlib_dicts={"mc_bac": {"label": f"{self.td['background'][self.la]}:" + r" $ZZ, Z\gamma$",
+                                               matplotlib_dicts={"mc_bac": {"label": f"{self.td['background'][self.la]}",  # :" + r" $ZZ, Z\gamma$",
                                                                             "color": "royalblue", "alpha": 1}})
         
         # ----
@@ -573,6 +573,7 @@ class _HiggsHistogramWidget(_CoreWidget):
         ax.set_ylabel(self.td["entries"][self.la], fontsize=22)
         
         fig.canvas.draw()
+        # fig.savefig("_higgs_widget.svg", quality=100, bbox_inches='tight', dpi=200, transparent=True)
     
     @property
     def run(self):
