@@ -302,8 +302,7 @@ class DiceWidget(object):
         ax.set_ylabel(self.td["probability"][self.la] if kwargs["checkbox_norm"] else self.td["entries"][self.la], fontsize=22)
         ax.set_xlabel(self.td["rolled dice number"][self.la], fontsize=22)
         
-        #ax.set_ylim(0, ax.get_ylim()[1] * 1.2)
-        ax.set_ylim(0, 30)
+        ax.set_ylim(0, ax.get_ylim()[1] * 1.2)
         
         self.ui_comp["text_show_measurement"].value = self._ui_helper__build_table()
         
@@ -313,8 +312,6 @@ class DiceWidget(object):
         plt.setp(ax.get_yticklabels(), fontsize=22)
         
         fig.canvas.draw()
-        
-        # fig.savefig("_dice_widget.svg", quality=100, bbox_inches='tight', dpi=200, transparent=True)
     
     @property
     def run(self):

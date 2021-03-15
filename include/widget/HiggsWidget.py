@@ -577,7 +577,6 @@ class _HiggsHistogramWidget(_CoreWidget):
         ax.set_ylabel(self.td["entries"][self.la], fontsize=22)
         
         fig.canvas.draw()
-        # fig.savefig("_higgs_widget.svg", quality=100, bbox_inches='tight', dpi=200, transparent=True)
     
     @property
     def run(self):
