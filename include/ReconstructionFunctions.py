@@ -31,7 +31,7 @@ def reconstruct_zz(row: pd.Series, pt_dict: dict = None):
         _combinations[k]["z"] = np.sum(v["lep"])  # actual z boson of this combination
     
     # helper 2
-    _valid_z_pair_masses = lambda _z1, _z2: (120 > _z1.mass > _z2.mass > 12) & (_z1.mass > 40)
+    _valid_z_pair_masses = lambda _z1, _z2: True  # might look like this in the student notebook (120 > _z1.mass > _z2.mass > 12) & (_z1.mass > 40)
     _pt_dict = pt_dict if pt_dict else {1: 0, 2: 0, 3: 0, 4: 0}  # for example {1: 20, 2: 10, 3: 5, 4: 1}
     _valid_z_pair_pt = lambda x: all([np.sum(x > _pt_dict[_key]) >= _key for _key in _pt_dict.keys()])
     _valid_flavour_comp = lambda ch, _d: len(np.unique([_v["f"] for _v in _d.values()])) == 2 if ch == "2e2mu" else True

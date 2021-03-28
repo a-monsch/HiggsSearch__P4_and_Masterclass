@@ -587,7 +587,7 @@ class HiggsWidget(_CoreWidget):
     
     def __init__(self, language="EN", display="histogram", style="simple", hist_eval_func=None, pdf_eval_func=None, **kwargs):
         super().__init__(language=language, **kwargs)
-        if display == "all " or display == "histogram":
+        if display == "all" or display == "histogram":
             self.hhw = _HiggsHistogramWidget(language=language, style=style, hist_eval_func=hist_eval_func, **kwargs)
         if display == "all" or display == "pdf":
             self.hpw = _HiggsPdfWidget(language=language, style=style, pdf_eval_func=pdf_eval_func, **kwargs)
