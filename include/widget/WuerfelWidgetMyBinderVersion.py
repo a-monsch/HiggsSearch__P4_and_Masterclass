@@ -188,8 +188,8 @@ class WuerfelWidget(object):
         _ui_tot = VBox([_ui_0, _ui_1, _ui_2, _ui_3])
 
         _out = self.build_out()
-        _out.layout.width = "70%"
-        _ui_tot.layout.width = "30%"
+        _out.layout.width = "60%"
+        _ui_tot.layout.width = "40%"
 
         _ui_final = VBox([HBox([_out, _ui_tot])])
         self.ui = _ui_final
@@ -324,7 +324,8 @@ class WuerfelWidget(object):
 
         self.ui_components["m_show"].value = self._build_table()
 
-        fig.canvas.draw()
+        # fig.canvas.draw()
+        plt.show()
 
     @property
     def run(self):
