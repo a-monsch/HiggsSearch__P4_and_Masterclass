@@ -157,8 +157,8 @@ class HiggsWidget(object):
         _ui_1 = VBox([_b3, _ui_0])
         
         _out = self.build_out()
-        _out.layout.width = "75%"
-        _ui_1.layout.width = "25%"
+        _out.layout.width = "70%"
+        _ui_1.layout.width = "30%"
         
         _ui_2 = HBox([self.ui_components["select_m_option"],
                       self.ui_components["add_m_val"],
@@ -264,7 +264,8 @@ class HiggsWidget(object):
         ax.set_xlabel(r"$m_{4\ell}$ in GeV")
         ax.set_ylabel(self.td["entries"][self.la])
         
-        fig.canvas.draw()
+        # fig.canvas.draw()
+        plt.show()
     
     @property
     def run(self):
