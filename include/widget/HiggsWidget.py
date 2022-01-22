@@ -457,8 +457,8 @@ class _HiggsHistogramWidget(_CoreWidget):
         
         _out = ipw.interactive_output(self.plot, _flatten_dict(self.ui_comp))
         
-        _out.layout.width = "70%" if self.style == "all" else "75%"
-        _ui1.layout.width = "30%" if self.style == "all" else "25%"
+        _out.layout.width = "70%"
+        _ui1.layout.width = "30%"
         
         return VBox([HBox([_out, _ui1]), self.measurement_ui])
     
