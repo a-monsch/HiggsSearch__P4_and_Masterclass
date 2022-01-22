@@ -167,8 +167,8 @@ class DiceWidget(object):
         _ui_tot = VBox([_ui_0, _ui_1, _ui_2, _ui_3])
         
         _out = ipw.interactive_output(self.plot, self.ui_comp)
-        _out.layout.width = "70%"
-        _ui_tot.layout.width = "30%"
+        _out.layout.width = "60%"
+        _ui_tot.layout.width = "40%"
         
         return VBox([HBox([_out, _ui_tot])])
     
@@ -311,7 +311,8 @@ class DiceWidget(object):
         plt.setp(ax.get_xticklabels(), fontsize=22)
         plt.setp(ax.get_yticklabels(), fontsize=22)
         
-        fig.canvas.draw()
+        # fig.canvas.draw()
+        plt.show()
     
     @property
     def run(self):
