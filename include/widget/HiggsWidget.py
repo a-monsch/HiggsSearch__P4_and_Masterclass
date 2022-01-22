@@ -245,8 +245,8 @@ class _HiggsPdfWidget(_CoreWidget):
         
         _out = ipw.interactive_output(self.plot, self.ui_comp)
         
-        _out.layout.width = "75%"
-        _ui1.layout.width = "25%"
+        _out.layout.width = "70%"
+        _ui1.layout.width = "30%"
         
         return VBox([HBox([_out, _ui1]), self.measurement_ui])
     
@@ -373,7 +373,8 @@ class _HiggsPdfWidget(_CoreWidget):
         
         legend_without_duplicate_labels(ax)
         
-        fig.canvas.draw()
+        # fig.canvas.draw()
+        plt.show()
     
     @property
     def run(self):
@@ -456,8 +457,8 @@ class _HiggsHistogramWidget(_CoreWidget):
         
         _out = ipw.interactive_output(self.plot, _flatten_dict(self.ui_comp))
         
-        _out.layout.width = "75%" if self.style == "all" else "80%"
-        _ui1.layout.width = "25%" if self.style == "all" else "20%"
+        _out.layout.width = "70%" if self.style == "all" else "75%"
+        _ui1.layout.width = "30%" if self.style == "all" else "25%"
         
         return VBox([HBox([_out, _ui1]), self.measurement_ui])
     
@@ -576,7 +577,8 @@ class _HiggsHistogramWidget(_CoreWidget):
         ax.set_xlabel(r"$m_{4\ell}$ in GeV", fontsize=22)
         ax.set_ylabel(self.td["entries"][self.la], fontsize=22)
         
-        fig.canvas.draw()
+        # fig.canvas.draw()
+        plt.show()
     
     @property
     def run(self):
